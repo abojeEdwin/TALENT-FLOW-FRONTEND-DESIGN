@@ -43,11 +43,16 @@ async function fetchAPI<T>(
       });
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     const response = await fetch(url, {
       ...fetchOptions,
       headers,
       credentials: "include",
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     const contentType = response.headers.get("content-type");
     let data: any;
@@ -90,6 +95,10 @@ async function fetchAPI<T>(
       throw error;
     }
     console.error("API Error:", error);
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Request timeout");
+    }
+    
     throw new Error("Network error");
   }
 }
