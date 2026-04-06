@@ -39,7 +39,7 @@ export function RegisterForm() {
       );
       await refreshUser();
       toast.success("Registration successful!");
-      router.push("/");
+      router.push("/home");
     } catch (error) {
       if (error instanceof APIError) {
         if (error.data.errors) {
