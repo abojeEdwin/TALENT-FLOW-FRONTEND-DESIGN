@@ -5,17 +5,17 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginFormData } from "@/lib/utils/validators";
-import { loginUser } from "@/lib/api/auth";
+import { loginUser, setAuthToken } from "@/lib/api/auth";
 import { APIError } from "@/lib/api/client";
-import { useAuth } from "@/lib/context/auth-context";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/context/auth-context";
 
 export function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const { refreshUser } = useAuth();
+  const { setUser } = useAuth();
 
   const {
     register,
@@ -29,9 +29,11 @@ export function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
     try {
-      await loginUser(data.email, data.password);
-      await refreshUser();
-      toast.success("Login successful!");
+      const response = await loginUser(data.email, data.password);
+      setAuthToken(response.accessToken);
+      setUser(response.user);
+      
+      toast.success(`Welcome, ${response.user.firstName}!`);
       router.push("/dashboard");
     } catch (error) {
       if (error instanceof APIError) {

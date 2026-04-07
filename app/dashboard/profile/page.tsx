@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from "@/lib/context/auth-context";
-import { ROLE_DISPLAY_NAMES } from "@/lib/utils/constants";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -49,17 +48,13 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Roles</label>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {user.roles.map((role) => (
-                <span
-                  key={role}
-                  className="inline-block rounded-full bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900"
-                >
-                  {ROLE_DISPLAY_NAMES[role]}
-                </span>
-              ))}
-            </div>
+            <label className="block text-sm font-medium text-gray-700">Role</label>
+            <input
+              type="text"
+              value={user.role}
+              disabled
+              className="mt-2 w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-gray-700"
+            />
           </div>
 
           <div>
@@ -70,27 +65,6 @@ export default function ProfilePage() {
               disabled
               className="mt-2 w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-gray-700"
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Joined</label>
-              <input
-                type="text"
-                value={new Date(user.createdAt).toLocaleDateString()}
-                disabled
-                className="mt-2 w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-gray-700"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Last Updated</label>
-              <input
-                type="text"
-                value={new Date(user.updatedAt).toLocaleDateString()}
-                disabled
-                className="mt-2 w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-gray-700"
-              />
-            </div>
           </div>
         </div>
       </div>

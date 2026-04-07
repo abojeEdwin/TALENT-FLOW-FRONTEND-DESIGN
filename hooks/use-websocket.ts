@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/context/auth-context';
 import { wsClient } from '@/lib/websocket-client';
 import { WebSocketMessage } from '@/lib/types';
 
@@ -14,7 +14,7 @@ export function useWebSocket() {
 
     const setupConnection = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
+        const token = localStorage.getItem('auth_token');
         if (!token) return;
 
         await wsClient.connect(token);

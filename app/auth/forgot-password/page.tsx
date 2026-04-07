@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { PasswordResetSchema, PasswordResetFormData } from '@/lib/schemas';
-import { useAuth } from '@/lib/context/auth-context';
+import { requestPasswordReset } from '@/lib/api/auth';
+import { APIError } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,6 @@ import { Loader2 } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
-  const { requestPasswordReset } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 

@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, type RegisterFormData } from "@/lib/utils/validators";
 import { registerUser } from "@/lib/api/auth";
 import { APIError } from "@/lib/api/client";
-import { useAuth } from "@/lib/context/auth-context";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
@@ -17,7 +16,6 @@ export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
-  const { refreshUser } = useAuth();
 
   const {
     register,
@@ -37,9 +35,8 @@ export function RegisterForm() {
         data.email,
         data.password
       );
-      await refreshUser();
-      toast.success("Registration successful!");
-      router.push("/home");
+      toast.success("Registration successful! Please log in.");
+      router.push("/auth/login");
     } catch (error) {
       if (error instanceof APIError) {
         if (error.data.errors) {

@@ -2,10 +2,9 @@
 
 import React from "react";
 import { useAuth } from "@/lib/context/auth-context";
-import { RoleName } from "@/lib/api/types";
 
 interface RoleGuardProps {
-  roles: (RoleName | string)[];
+  roles: string[];
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }
@@ -25,7 +24,7 @@ export function RoleGuard({
     );
   }
 
-  if (!user || !user.roles?.some((role) => roles.includes(role))) {
+  if (!user || !roles.includes(user.role)) {
     return fallback;
   }
 

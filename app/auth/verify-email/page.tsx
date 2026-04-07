@@ -1,4 +1,4 @@
-import { EmailVerificationForm } from "@/components/auth/email-verification-form";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Verify Email - TrailForge",
@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function VerifyEmailPage() {
-  return <EmailVerificationForm />;
+  redirect("/auth/login");
 }

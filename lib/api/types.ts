@@ -20,9 +20,9 @@ export enum LessonType {
 
 export enum UserStatus {
   ACTIVE = "ACTIVE",
-  PENDING_VERIFICATION = "PENDING_VERIFICATION",
   LOCKED = "LOCKED",
   DISABLED = "DISABLED",
+  INACTIVE = "INACTIVE",
 }
 
 export enum ProgramStatus {
@@ -33,6 +33,7 @@ export enum ProgramStatus {
 export enum TeamStatus {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
+  SUSPENDED = "SUSPENDED",
 }
 
 // Auth DTOs
@@ -58,11 +59,21 @@ export interface AuthResponse {
   email: string;
   firstName: string;
   lastName: string;
-  role: RoleName;
-  status: UserStatus;
-  emailVerified: boolean;
-  createdAt?: string;
-  updatedAt?: string;
+  role: string;
+  status: string;
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  tokenType: string;
+  expiresInSeconds: number;
+  user: AuthResponse;
+}
+
+export interface RegisterResponse {
+  id: string;
+  email: string;
+  message: string;
 }
 
 // User DTOs

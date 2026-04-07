@@ -3,6 +3,11 @@ import { ErrorResponse } from "./types";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';
 
+function getStoredToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("auth_token");
+}
+
 export class APIError extends Error {
   constructor(
     public status: number,
@@ -31,6 +36,14 @@ async function fetchAPI<T>(
     "Content-Type": "application/json",
     ...customHeaders,
   } as Record<string, string>;
+
+  // Add JWT token if not skipping auth
+  if (!skipAuth) {
+    const token = getStoredToken();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
 
   const url = `${API_BASE_URL}/${API_VERSION}${endpoint}`;
 

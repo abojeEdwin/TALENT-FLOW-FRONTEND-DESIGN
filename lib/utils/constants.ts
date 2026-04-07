@@ -4,6 +4,7 @@ export const ROLE_DISPLAY_NAMES: Record<RoleName, string> = {
   [RoleName.ADMIN]: "Administrator",
   [RoleName.INSTRUCTOR]: "Instructor",
   [RoleName.INTERN]: "Learner",
+  [RoleName.MENTOR]: "Mentor",
 };
 
 export const USER_STATUS_COLORS: Record<UserStatus, string> = {
@@ -11,6 +12,8 @@ export const USER_STATUS_COLORS: Record<UserStatus, string> = {
   [UserStatus.ACTIVE]: "bg-green-100 text-green-800",
   [UserStatus.LOCKED]: "bg-red-100 text-red-800",
   [UserStatus.DISABLED]: "bg-gray-100 text-gray-800",
+  [UserStatus.INACTIVE]: "bg-gray-100 text-gray-800",
+  [UserStatus.SUSPENDED]: "bg-red-100 text-red-800",
 };
 
 export const COURSE_STATUS_COLORS: Record<CourseStatus, string> = {

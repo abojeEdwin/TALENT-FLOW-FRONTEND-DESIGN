@@ -4,14 +4,16 @@ import {
   RegisterRequest,
   AuthResponse,
   ResetPasswordRequest,
+  LoginResponse,
+  RegisterResponse,
 } from "./types";
 
 export async function loginUser(
   email: string,
   password: string
-): Promise<AuthResponse> {
+): Promise<LoginResponse> {
   const request: LoginRequest = { email, password };
-  return fetchAPI<AuthResponse>("/auth/login", {
+  return fetchAPI<LoginResponse>("/auth/login", {
     method: "POST",
     body: JSON.stringify(request),
     skipAuth: true,
@@ -23,14 +25,14 @@ export async function registerUser(
   lastName: string,
   email: string,
   password: string
-): Promise<AuthResponse> {
+): Promise<RegisterResponse> {
   const request: RegisterRequest = {
     firstName,
     lastName,
     email,
     password,
   };
-  return fetchAPI<AuthResponse>("/auth/register", {
+  return fetchAPI<RegisterResponse>("/auth/register", {
     method: "POST",
     body: JSON.stringify(request),
     skipAuth: true,
@@ -51,6 +53,25 @@ export async function verifyEmail(token: string): Promise<AuthResponse> {
   return fetchAPI<AuthResponse>(`/auth/verify-email/confirm?token=${token}`, {
     skipAuth: true,
   });
+}
+
+// Store JWT token
+export function setAuthToken(token: string | null): void {
+  if (typeof window === "undefined") return;
+  if (token) {
+    localStorage.setItem("auth_token", token);
+    // Dispatch event for same-tab listeners
+    window.dispatchEvent(new Event("auth-token-change"));
+  } else {
+    localStorage.removeItem("auth_token");
+    window.dispatchEvent(new Event("auth-token-change"));
+  }
+}
+
+// Get JWT token
+export function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("auth_token");
 }
 
 export async function requestPasswordReset(email: string): Promise<void> {
