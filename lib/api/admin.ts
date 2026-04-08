@@ -211,3 +211,37 @@ export async function listCohortTeams(
 export async function listCohorts(): Promise<CohortResponse[]> {
   return fetchAPI<CohortResponse[]>("/admin/programs/all-cohorts");
 }
+
+export interface AutoAllocateResponse {
+  teamId: string;
+  allocatedCount: number;
+  maxTeamSize: number;
+  members: TeamMemberResponse[];
+}
+
+export async function autoAllocateInterns(teamId: string): Promise<AutoAllocateResponse> {
+  return fetchAPI<AutoAllocateResponse>(`/admin/programs/teams/${teamId}/members/auto-allocate`, {
+    method: "POST",
+  });
+}
+
+export async function listTeamMembers(teamId: string): Promise<TeamMemberResponse[]> {
+  return fetchAPI<TeamMemberResponse[]>(`/admin/programs/teams/${teamId}/members`);
+}
+
+export async function listUnallocatedInterns(
+  query?: string,
+  status?: UserStatus,
+  page: number = 0,
+  size: number = 20
+): Promise<PagedResponse<AdminUserSummaryResponse>> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    size: size.toString(),
+  });
+
+  if (query) params.append("query", query);
+  if (status) params.append("status", status);
+
+  return fetchAPI<PagedResponse<AdminUserSummaryResponse>>(`/admin/users/interns/unallocated?${params.toString()}`);
+}

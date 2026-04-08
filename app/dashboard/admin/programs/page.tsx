@@ -50,9 +50,12 @@ import {
   createProjectTeam,
   listAllProjectTeams,
   allocateUserToTeam,
+  autoAllocateInterns,
+  listTeamMembers,
   listCohortTeams,
   listCohorts,
   listInstructors,
+  listUnallocatedInterns,
   AdminUserSummaryResponse,
   AdminUserDetailResponse,
   CohortResponse,
@@ -289,6 +292,11 @@ function TeamsTab() {
     userId: "",
     teamRole: "",
   });
+  const [autoAllocating, setAutoAllocating] = useState(false);
+  const [teamMembersDialogOpen, setTeamMembersDialogOpen] = useState(false);
+  const [selectedTeamMembers, setSelectedTeamMembers] = useState<TeamMemberResponse[]>([]);
+  const [viewingTeam, setViewingTeam] = useState<ProjectTeamResponse | null>(null);
+  const [allocatingTeam, setAllocatingTeam] = useState<ProjectTeamResponse | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -314,9 +322,8 @@ function TeamsTab() {
 
   const fetchAvailableInterns = async () => {
     try {
-      const response = await listUsers(undefined, undefined, 0, 100);
-      const interns = response.content.filter(u => u.role === "INTERN");
-      setAvailableInterns(interns);
+      const response = await listUnallocatedInterns(undefined, undefined, 0, 100);
+      setAvailableInterns(response.content);
     } catch (error) {
       console.error("Failed to fetch interns:", error);
     }
@@ -342,30 +349,44 @@ function TeamsTab() {
     }
   };
 
-  const handleAllocateUser = async () => {
-    if (!selectedTeam || !allocationForm.userId || !allocationForm.teamRole) {
-      toast.error("Please fill in all required fields");
+  const handleAllocateUser = async (userId: string, teamRole: string) => {
+    if (!allocatingTeam || !userId || !teamRole) {
       return;
     }
     try {
-      await allocateUserToTeam(selectedTeam.id, {
-        userId: allocationForm.userId,
-        teamRole: allocationForm.teamRole,
+      await allocateUserToTeam(allocatingTeam.id, {
+        userId,
+        teamRole,
       });
-      toast.success("User allocated to team successfully");
-      setAllocationDialogOpen(false);
-      setSelectedTeam(null);
-      setAllocationForm({ userId: "", teamRole: "" });
+      toast.success("Intern allocated successfully");
+      setAllocatingTeam(null);
+      fetchData();
     } catch (error) {
-      toast.error("Failed to allocate user to team");
+      toast.error("Failed to allocate intern");
     }
   };
 
-  const openAllocationDialog = async (team: ProjectTeamResponse) => {
-    setSelectedTeam(team);
-    setAllocationForm({ userId: "", teamRole: "" });
-    setAllocationDialogOpen(true);
-    await fetchAvailableInterns();
+  const handleAutoAllocate = async (team: ProjectTeamResponse) => {
+    try {
+      setAutoAllocating(true);
+      const result = await autoAllocateInterns(team.id);
+      toast.success(`Successfully allocated ${result.allocatedCount} intern(s)`);
+    } catch (error) {
+      toast.error("Failed to auto-allocate interns");
+    } finally {
+      setAutoAllocating(false);
+    }
+  };
+
+  const handleViewTeamMembers = async (team: ProjectTeamResponse) => {
+    try {
+      setViewingTeam(team);
+      const members = await listTeamMembers(team.id);
+      setSelectedTeamMembers(members);
+      setTeamMembersDialogOpen(true);
+    } catch (error) {
+      toast.error("Failed to fetch team members");
+    }
   };
 
   const getCohortName = (cohortId: string) => {
@@ -403,18 +424,53 @@ function TeamsTab() {
               <TableBody>
                 {teams.map((team) => (
                   <TableRow key={team.id}>
-                    <TableCell className="font-medium">{team.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <button 
+                        className="text-blue-600 hover:underline cursor-pointer"
+                        onClick={() => handleViewTeamMembers(team)}
+                      >
+                        {team.name}
+                      </button>
+                    </TableCell>
                     <TableCell>{getCohortName(team.cohortId)}</TableCell>
                     <TableCell>{team.description || "-"}</TableCell>
                     <TableCell>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => openAllocationDialog(team)}
-                      >
-                        <Users className="w-4 h-4 mr-1" />
-                        Allocate
-                      </Button>
+                      <div className="flex gap-2">
+                        <DropdownMenu onOpenChange={async (open) => {
+                          if (open) {
+                            setAllocatingTeam(team);
+                            await fetchAvailableInterns();
+                          }
+                        }}>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              Allocate
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            {availableInterns.length === 0 ? (
+                              <DropdownMenuItem disabled>No unallocated interns</DropdownMenuItem>
+                            ) : (
+                              availableInterns.map((intern) => (
+                                <DropdownMenuItem
+                                  key={intern.id}
+                                  onClick={() => handleAllocateUser(intern.id, "INTERN")}
+                                >
+                                  {intern.firstName} {intern.lastName}
+                                </DropdownMenuItem>
+                              ))
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button 
+                          variant="secondary" 
+                          size="sm"
+                          disabled={autoAllocating}
+                          onClick={() => handleAutoAllocate(team)}
+                        >
+                          Auto
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -471,52 +527,45 @@ function TeamsTab() {
         </DialogContent>
       </Dialog>
 
-      {/* Allocate User Dialog */}
-      <Dialog open={allocationDialogOpen} onOpenChange={setAllocationDialogOpen}>
+      {/* Team Members Dialog */}
+      <Dialog open={teamMembersDialogOpen} onOpenChange={setTeamMembersDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Allocate Intern to Team</DialogTitle>
+            <DialogTitle>Team Members - {viewingTeam?.name}</DialogTitle>
             <DialogDescription>
-              Add an intern to {selectedTeam?.name}
+              {selectedTeamMembers.length} member(s) in this team
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Select Intern *</Label>
-              <select
-                className="w-full p-2 border rounded-md"
-                value={allocationForm.userId}
-                onChange={(e) => setAllocationForm({ ...allocationForm, userId: e.target.value })}
-              >
-                <option value="">Select an intern</option>
-                {availableInterns.map((intern) => (
-                  <option key={intern.id} value={intern.id}>
-                    {intern.firstName} {intern.lastName} ({intern.email})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Label>Role in Team *</Label>
-              <select
-                className="w-full p-2 border rounded-md"
-                value={allocationForm.teamRole}
-                onChange={(e) => setAllocationForm({ ...allocationForm, teamRole: e.target.value })}
-              >
-                <option value="">Select role</option>
-                <option value="INTERN">Intern</option>
-                <option value="LEAD">Team Lead</option>
-                <option value="DEVELOPER">Developer</option>
-              </select>
-            </div>
+          <div className="max-h-96 overflow-y-auto">
+            {selectedTeamMembers.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground">
+                No members in this team yet
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {selectedTeamMembers.map((member) => (
+                    <TableRow key={member.userId}>
+                      <TableCell>{member.fullName}</TableCell>
+                      <TableCell>{member.email}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{member.teamRole}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setAllocationDialogOpen(false);
-              setSelectedTeam(null);
-              setAllocationForm({ userId: "", teamRole: "" });
-            }}>Cancel</Button>
-            <Button onClick={handleAllocateUser}>Allocate</Button>
+            <Button variant="outline" onClick={() => setTeamMembersDialogOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
