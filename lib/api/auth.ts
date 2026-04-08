@@ -60,11 +60,8 @@ export function setAuthToken(token: string | null): void {
   if (typeof window === "undefined") return;
   if (token) {
     localStorage.setItem("auth_token", token);
-    // Dispatch event for same-tab listeners
-    window.dispatchEvent(new Event("auth-token-change"));
   } else {
     localStorage.removeItem("auth_token");
-    window.dispatchEvent(new Event("auth-token-change"));
   }
 }
 

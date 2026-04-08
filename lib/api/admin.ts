@@ -8,9 +8,9 @@ export interface AdminUserSummaryResponse {
   email: string;
   firstName: string;
   lastName: string;
-  roles: RoleName[];
-  status: UserStatus;
-  createdAt: string;
+  role: string;
+  status: string;
+  lastLoginAt?: string;
 }
 
 export interface AdminUserDetailResponse extends AdminUserSummaryResponse {
@@ -24,30 +24,22 @@ export interface CohortResponse {
   intakeYear: number;
   startDate: string;
   endDate: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
+  isActive: boolean;
+  status?: string;
 }
 
 export interface ProjectTeamResponse {
   id: string;
-  name: string;
   cohortId: string;
-  status: string;
-  memberCount: number;
-  createdAt: string;
-  updatedAt: string;
+  name: string;
+  description?: string;
 }
 
 export interface TeamMemberResponse {
-  id: string;
   userId: string;
-  userEmail: string;
-  userFirstName: string;
-  userLastName: string;
-  teamId: string;
-  role: string;
-  joinedAt: string;
+  email: string;
+  fullName: string;
+  teamRole: string;
 }
 
 export interface CreateCohortRequest {
@@ -61,11 +53,12 @@ export interface CreateCohortRequest {
 export interface CreateProjectTeamRequest {
   name: string;
   cohortId: string;
+  description?: string;
 }
 
 export interface AllocateUserToTeamRequest {
   userId: string;
-  role?: string;
+  teamRole: string;
 }
 
 export interface CreateInstructorRequest {
@@ -152,10 +145,29 @@ export async function triggerPasswordReset(userId: string): Promise<void> {
 export async function onboardInstructor(
   request: CreateInstructorRequest
 ): Promise<OnboardInstructorResponse> {
-  return fetchAPI<OnboardInstructorResponse>("/admin/instructors/onboard", {
+  return fetchAPI<OnboardInstructorResponse>("/admin/users/instructors", {
     method: "POST",
     body: JSON.stringify(request),
   });
+}
+
+export async function listInstructors(
+  query?: string,
+  status?: UserStatus,
+  page: number = 0,
+  size: number = 20,
+  sort?: string
+): Promise<PagedResponse<AdminUserSummaryResponse>> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    size: size.toString(),
+  });
+
+  if (query) params.append("query", query);
+  if (status) params.append("status", status);
+  if (sort) params.append("sort", sort);
+
+  return fetchAPI<PagedResponse<AdminUserSummaryResponse>>(`/admin/users/instructors?${params.toString()}`);
 }
 
 export async function createCohort(
@@ -170,17 +182,21 @@ export async function createCohort(
 export async function createProjectTeam(
   request: CreateProjectTeamRequest
 ): Promise<ProjectTeamResponse> {
-  return fetchAPI<ProjectTeamResponse>("/admin/teams", {
+  return fetchAPI<ProjectTeamResponse>("/admin/programs/teams", {
     method: "POST",
     body: JSON.stringify(request),
   });
+}
+
+export async function listAllProjectTeams(): Promise<ProjectTeamResponse[]> {
+  return fetchAPI<ProjectTeamResponse[]>("/admin/programs/teams");
 }
 
 export async function allocateUserToTeam(
   teamId: string,
   request: AllocateUserToTeamRequest
 ): Promise<TeamMemberResponse> {
-  return fetchAPI<TeamMemberResponse>(`/admin/teams/${teamId}/members`, {
+  return fetchAPI<TeamMemberResponse>(`/admin/programs/teams/${teamId}/members`, {
     method: "POST",
     body: JSON.stringify(request),
   });
@@ -189,7 +205,7 @@ export async function allocateUserToTeam(
 export async function listCohortTeams(
   cohortId: string
 ): Promise<ProjectTeamResponse[]> {
-  return fetchAPI<ProjectTeamResponse[]>(`/admin/cohorts/${cohortId}/teams`);
+  return fetchAPI<ProjectTeamResponse[]>(`/admin/programs/cohorts/${cohortId}/teams`);
 }
 
 export async function listCohorts(): Promise<CohortResponse[]> {

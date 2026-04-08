@@ -48,13 +48,16 @@ import {
   onboardInstructor,
   createCohort,
   createProjectTeam,
+  listAllProjectTeams,
   allocateUserToTeam,
   listCohortTeams,
   listCohorts,
+  listInstructors,
   AdminUserSummaryResponse,
   AdminUserDetailResponse,
   CohortResponse,
   ProjectTeamResponse,
+  TeamMemberResponse,
   RoleName,
   UserStatus,
   CreateCohortRequest,
@@ -75,7 +78,7 @@ import {
 
 const ROLE_OPTIONS = [
   { value: RoleName.ADMIN, label: "Admin" },
-  { value: RoleName.MENTOR, label: "Mentor" },
+  { value: RoleName.INSTRUCTOR, label: "Instructor" },
   { value: RoleName.INTERN, label: "Intern" },
 ];
 
@@ -83,7 +86,6 @@ const STATUS_OPTIONS = [
   { value: UserStatus.ACTIVE, label: "Active", color: "bg-green-100 text-green-800" },
   { value: UserStatus.INACTIVE, label: "Inactive", color: "bg-gray-100 text-gray-800" },
   { value: UserStatus.LOCKED, label: "Locked", color: "bg-red-100 text-red-800" },
-  { value: UserStatus.SUSPENDED, label: "Suspended", color: "bg-yellow-100 text-yellow-800" },
 ];
 
 export default function AdminProgramsPage() {
@@ -272,29 +274,109 @@ function CohortsTab() {
 
 function TeamsTab() {
   const [teams, setTeams] = useState<ProjectTeamResponse[]>([]);
+  const [cohorts, setCohorts] = useState<CohortResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [allocationDialogOpen, setAllocationDialogOpen] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<ProjectTeamResponse | null>(null);
+  const [availableInterns, setAvailableInterns] = useState<AdminUserSummaryResponse[]>([]);
   const [formData, setFormData] = useState<CreateProjectTeamRequest>({
     name: "",
     cohortId: "",
+    description: "",
   });
-  const [cohorts, setCohorts] = useState<CohortResponse[]>([]);
+  const [allocationForm, setAllocationForm] = useState({
+    userId: "",
+    teamRole: "",
+  });
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [cohortsData, teamsData] = await Promise.all([
+        listCohorts(),
+        listAllProjectTeams(),
+      ]);
+      setCohorts(cohortsData);
+      setTeams(teamsData);
+    } catch (error) {
+      console.error("Failed to fetch teams:", error);
+      setTeams([]);
+      setCohorts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchAvailableInterns = async () => {
+    try {
+      const response = await listUsers(undefined, undefined, 0, 100);
+      const interns = response.content.filter(u => u.role === "INTERN");
+      setAvailableInterns(interns);
+    } catch (error) {
+      console.error("Failed to fetch interns:", error);
+    }
+  };
 
   const handleCreateTeam = async () => {
+    if (!formData.name || !formData.cohortId) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
     try {
-      await createProjectTeam(formData);
+      await createProjectTeam({
+        name: formData.name,
+        cohortId: formData.cohortId,
+        description: formData.description,
+      });
       toast.success("Team created successfully");
-      setDialogOpen(false);
-      setFormData({ name: "", cohortId: "" });
+      setCreateDialogOpen(false);
+      setFormData({ name: "", cohortId: "", description: "" });
+      fetchData();
     } catch (error) {
       toast.error("Failed to create team");
     }
   };
 
+  const handleAllocateUser = async () => {
+    if (!selectedTeam || !allocationForm.userId || !allocationForm.teamRole) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    try {
+      await allocateUserToTeam(selectedTeam.id, {
+        userId: allocationForm.userId,
+        teamRole: allocationForm.teamRole,
+      });
+      toast.success("User allocated to team successfully");
+      setAllocationDialogOpen(false);
+      setSelectedTeam(null);
+      setAllocationForm({ userId: "", teamRole: "" });
+    } catch (error) {
+      toast.error("Failed to allocate user to team");
+    }
+  };
+
+  const openAllocationDialog = async (team: ProjectTeamResponse) => {
+    setSelectedTeam(team);
+    setAllocationForm({ userId: "", teamRole: "" });
+    setAllocationDialogOpen(true);
+    await fetchAvailableInterns();
+  };
+
+  const getCohortName = (cohortId: string) => {
+    const cohort = cohorts.find(c => c.id === cohortId);
+    return cohort?.name || cohortId;
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button onClick={() => setDialogOpen(true)}>
+        <Button onClick={() => setCreateDialogOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Create Team
         </Button>
@@ -314,21 +396,26 @@ function TeamsTab() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Cohort</TableHead>
-                  <TableHead>Members</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {teams.map((team) => (
                   <TableRow key={team.id}>
                     <TableCell className="font-medium">{team.name}</TableCell>
-                    <TableCell>{team.cohortId}</TableCell>
-                    <TableCell>{team.memberCount}</TableCell>
+                    <TableCell>{getCohortName(team.cohortId)}</TableCell>
+                    <TableCell>{team.description || "-"}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{team.status}</Badge>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => openAllocationDialog(team)}
+                      >
+                        <Users className="w-4 h-4 mr-1" />
+                        Allocate
+                      </Button>
                     </TableCell>
-                    <TableCell>{new Date(team.createdAt).toLocaleDateString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -337,7 +424,8 @@ function TeamsTab() {
         </CardContent>
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {/* Create Team Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create Project Team</DialogTitle>
@@ -345,7 +433,7 @@ function TeamsTab() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Team Name</Label>
+              <Label>Team Name *</Label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -353,24 +441,82 @@ function TeamsTab() {
               />
             </div>
             <div>
-              <Label>Cohort</Label>
+              <Label>Cohort *</Label>
               <select
                 className="w-full p-2 border rounded-md"
                 value={formData.cohortId}
                 onChange={(e) => setFormData({ ...formData, cohortId: e.target.value })}
               >
                 <option value="">Select a cohort</option>
-                {cohorts.map((cohort) => (
+                {cohorts.filter(c => c.isActive).map((cohort) => (
                   <option key={cohort.id} value={cohort.id}>
                     {cohort.name}
                   </option>
                 ))}
               </select>
             </div>
+            <div>
+              <Label>Description (Optional)</Label>
+              <Input
+                value={formData.description || ""}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Brief description of the team"
+              />
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleCreateTeam}>Create</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Allocate User Dialog */}
+      <Dialog open={allocationDialogOpen} onOpenChange={setAllocationDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Allocate Intern to Team</DialogTitle>
+            <DialogDescription>
+              Add an intern to {selectedTeam?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Select Intern *</Label>
+              <select
+                className="w-full p-2 border rounded-md"
+                value={allocationForm.userId}
+                onChange={(e) => setAllocationForm({ ...allocationForm, userId: e.target.value })}
+              >
+                <option value="">Select an intern</option>
+                {availableInterns.map((intern) => (
+                  <option key={intern.id} value={intern.id}>
+                    {intern.firstName} {intern.lastName} ({intern.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label>Role in Team *</Label>
+              <select
+                className="w-full p-2 border rounded-md"
+                value={allocationForm.teamRole}
+                onChange={(e) => setAllocationForm({ ...allocationForm, teamRole: e.target.value })}
+              >
+                <option value="">Select role</option>
+                <option value="INTERN">Intern</option>
+                <option value="LEAD">Team Lead</option>
+                <option value="DEVELOPER">Developer</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setAllocationDialogOpen(false);
+              setSelectedTeam(null);
+              setAllocationForm({ userId: "", teamRole: "" });
+            }}>Cancel</Button>
+            <Button onClick={handleAllocateUser}>Allocate</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -393,11 +539,8 @@ function InstructorsTab() {
   const fetchInstructors = async () => {
     setLoading(true);
     try {
-      const response = await listUsers(undefined, undefined, 0, 100);
-      const instructors = response.content.filter(u => 
-        u.roles.includes(RoleName.MENTOR)
-      );
-      setUsers(instructors);
+      const response = await listInstructors(undefined, undefined, 0, 100);
+      setUsers(response.content);
     } catch (error) {
       console.error("Failed to fetch instructors:", error);
     } finally {
@@ -444,8 +587,8 @@ function InstructorsTab() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Joined</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -455,10 +598,10 @@ function InstructorsTab() {
                       {user.firstName} {user.lastName}
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.role}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{user.status}</Badge>
                     </TableCell>
-                    <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -496,21 +639,6 @@ function InstructorsTab() {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>Bio (Optional)</Label>
-              <Input
-                value={formData.bio || ""}
-                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>Expertise (Optional)</Label>
-              <Input
-                value={formData.expertise || ""}
-                onChange={(e) => setFormData({ ...formData, expertise: e.target.value })}
-                placeholder="e.g., React, Node.js"
               />
             </div>
           </div>

@@ -30,15 +30,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Capture the token we're using - don't switch users if token changed
+    const tokenAtStart = token;
+
     try {
       console.log("[Auth] Fetching current user...");
       const currentUser = await getCurrentUser();
       console.log("[Auth] User fetched:", currentUser);
-      setUser(currentUser);
+      
+      // Only set user if token hasn't changed (another tab didn't login)
+      if (getAuthToken() === tokenAtStart) {
+        setUser(currentUser);
+      } else {
+        console.log("[Auth] Token changed during fetch, ignoring response");
+      }
     } catch (error) {
-      console.log("[Auth] Error fetching user, clearing token");
-      setAuthToken(null);
-      setUser(null);
+      console.log("[Auth] Error fetching user:", error);
+      // Check if token still exists - it might have been replaced by another tab
+      const currentToken = getAuthToken();
+      
+      // Only clear if token hasn't changed (meaning our own token is invalid)
+      // If token changed (another tab logged in), don't clear - that tab will handle it
+      if (currentToken === tokenAtStart) {
+        // Our token is invalid (401 from server) - clear session
+        console.log("[Auth] Our token invalid, clearing session");
+        setAuthToken(null);
+        setUser(null);
+      } else {
+        console.log("[Auth] Token changed by another tab, ignoring");
+        // Don't clear - let the other tab's event handle updating state
+      }
     } finally {
       setIsLoading(false);
     }
@@ -48,19 +69,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fetchUser();
   }, []);
 
-  // Listen for storage changes and custom auth events
+  // Listen for storage changes (login/logout in another tab)
   useEffect(() => {
     const handleAuthChange = () => {
-      console.log("[Auth] Token changed, re-fetching user...");
+      console.log("[Auth] Storage changed, re-fetching user...");
       fetchUser();
     };
     
     window.addEventListener("storage", handleAuthChange);
-    window.addEventListener("auth-token-change", handleAuthChange);
     
     return () => {
       window.removeEventListener("storage", handleAuthChange);
-      window.removeEventListener("auth-token-change", handleAuthChange);
     };
   }, []);
 
