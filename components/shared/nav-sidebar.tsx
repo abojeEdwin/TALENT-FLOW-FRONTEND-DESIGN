@@ -47,7 +47,7 @@ export function NavSidebar() {
 
   if (hasRole(RoleName.ADMIN)) {
     menuItems = [...ADMIN_MENU_ITEMS, ...menuItems];
-  } else if (hasRole(RoleName.MENTOR)) {
+  } else if (hasRole(RoleName.INSTRUCTOR)) {
     menuItems = [...INSTRUCTOR_MENU_ITEMS, ...menuItems];
   } else if (hasRole(RoleName.INTERN)) {
     menuItems = [...LEARNER_MENU_ITEMS, ...menuItems];

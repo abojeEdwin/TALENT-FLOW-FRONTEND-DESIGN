@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 
 export default function CourseEditPage({ params }: { params: { id: string } }) {
   return (
-    <RoleGuard roles={["MENTOR"]}>
+    <RoleGuard roles={["INSTRUCTOR"]}>
       <div className="space-y-6">
         <Link
           href="/dashboard/instructor/courses"

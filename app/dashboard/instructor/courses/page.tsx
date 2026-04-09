@@ -87,7 +87,7 @@ function InstructorDashboardContent() {
 
 export default function InstructorCoursesPage() {
   return (
-    <RoleGuard roles={[RoleName.MENTOR]}>
+    <RoleGuard roles={[RoleName.INSTRUCTOR]}>
       <InstructorDashboardContent />
     </RoleGuard>
   );

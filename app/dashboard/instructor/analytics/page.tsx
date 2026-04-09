@@ -2,7 +2,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LineChart, Line, BarChart, Bar, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { RoleGuard } from '@/components/shared/role-guard';
+import { RoleName } from '@/lib/api/types';
 
 // Mock data
 const enrollmentTrend = [
@@ -42,7 +44,8 @@ const topPerformers = [
 
 export default function AnalyticsPage() {
   return (
-    <div className="space-y-8">
+    <RoleGuard roles={[RoleName.INSTRUCTOR]}>
+      <div className="space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold mb-2">Student Analytics</h1>
@@ -200,6 +203,7 @@ export default function AnalyticsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </RoleGuard>
   );
 }

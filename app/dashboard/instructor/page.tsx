@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { BookOpen, Users, TrendingUp, Award, Plus, ArrowRight } from 'lucide-react';
+import { RoleGuard } from '@/components/shared/role-guard';
+import { RoleName } from '@/lib/api/types';
 
 // Mock data
 const enrollmentData = [
@@ -50,7 +52,8 @@ export default function InstructorDashboard() {
   const { user } = useAuth();
 
   return (
-    <div className="space-y-8">
+    <RoleGuard roles={[RoleName.INSTRUCTOR]}>
+      <div className="space-y-8">
       {/* Welcome Section */}
       <div className="flex items-start justify-between">
         <div>
@@ -221,6 +224,6 @@ export default function InstructorDashboard() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </RoleGuard>
   );
 }

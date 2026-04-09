@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 
 export default function InstructorProgressPage() {
   return (
-    <RoleGuard roles={["MENTOR"]}>
+    <RoleGuard roles={["INSTRUCTOR"]}>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Student Progress</h1>

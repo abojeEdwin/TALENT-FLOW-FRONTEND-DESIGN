@@ -30,9 +30,6 @@ export function LoginForm() {
     setIsSubmitting(true);
     try {
       const response = await loginUser(data.email, data.password);
-      setAuthToken(response.accessToken);
-      setUser(response.user);
-      
       toast.success(`Welcome, ${response.user.firstName}!`);
       router.push("/dashboard");
     } catch (error) {

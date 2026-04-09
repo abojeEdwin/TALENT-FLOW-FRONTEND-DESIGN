@@ -13,7 +13,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     if (!isLoading && isAuthenticated) {
       if (hasRole(RoleName.ADMIN)) {
         router.push("/dashboard/admin/users");
-      } else if (hasRole(RoleName.MENTOR)) {
+      } else if (hasRole(RoleName.INSTRUCTOR)) {
         router.push("/dashboard/instructor/courses");
       } else {
         router.push("/dashboard/learner/courses");
