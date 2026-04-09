@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CreateCourseSchema, CreateCourseFormData } from '@/lib/schemas';
+import { createCourse } from '@/lib/api/courses';
+import { APIError } from '@/lib/api/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,13 +27,19 @@ export default function CreateCoursePage() {
   const onSubmit = async (data: CreateCourseFormData) => {
     try {
       setIsLoading(true);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await createCourse({
+        title: data.title,
+        description: data.description,
+      });
       toast.success('Course created successfully');
       router.push('/dashboard/instructor/courses');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to create course';
-      toast.error(message);
+      if (error instanceof APIError) {
+        toast.error(error.message || 'Failed to create course');
+      } else {
+        const message = error instanceof Error ? error.message : 'Failed to create course';
+        toast.error(message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -87,20 +95,6 @@ export default function CreateCoursePage() {
               />
               {form.formState.errors.description && (
                 <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>
-              )}
-            </div>
-
-            {/* Category */}
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Input
-                id="category"
-                placeholder="e.g., Frontend, Backend, Mobile, etc."
-                disabled={isLoading}
-                {...form.register('category')}
-              />
-              {form.formState.errors.category && (
-                <p className="text-sm text-destructive">{form.formState.errors.category.message}</p>
               )}
             </div>
 

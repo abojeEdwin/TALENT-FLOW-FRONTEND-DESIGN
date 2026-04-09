@@ -29,7 +29,16 @@ export function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
     try {
+      console.log("[Login] Calling loginUser...");
       const response = await loginUser(data.email, data.password);
+      console.log("[Login] loginUser success, response.user:", response.user);
+      
+      console.log("[Login] Setting auth token...");
+      setAuthToken(response.accessToken);
+      console.log("[Login] Setting user in context...");
+      setUser(response.user);
+      
+      console.log("[Login] Redirecting to /dashboard...");
       toast.success(`Welcome, ${response.user.firstName}!`);
       router.push("/dashboard");
     } catch (error) {

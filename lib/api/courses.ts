@@ -26,15 +26,8 @@ export async function fetchPublishedCourses(
   return fetchAPI<CourseListResponse>(`/courses?${params.toString()}`);
 }
 
-export async function fetchMyCourses(
-  page: number = 0,
-  size: number = 20
-): Promise<CourseListResponse> {
-  const params = new URLSearchParams({
-    page: page.toString(),
-    size: size.toString(),
-  });
-  return fetchAPI<CourseListResponse>(`/courses/my-courses?${params.toString()}`);
+export async function fetchMyCourses(): Promise<CourseResponse[]> {
+  return fetchAPI<CourseResponse[]>("/instructor/my-courses");
 }
 
 export async function fetchCourseById(id: string): Promise<CourseResponse> {
@@ -51,7 +44,7 @@ export async function enrollCourse(courseId: string): Promise<EnrollmentResponse
 export async function createCourse(
   data: CreateCourseRequest
 ): Promise<CourseResponse> {
-  return fetchAPI<CourseResponse>("/courses", {
+  return fetchAPI<CourseResponse>("/instructor/courses", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -75,7 +68,7 @@ export async function createCourseWithMedia(
   if (coverImage) formData.append("coverImage", coverImage);
   if (introVideo) formData.append("introVideo", introVideo);
 
-  return fetchAPI<CourseResponse>("/courses", {
+  return fetchAPI<CourseResponse>("/instructor/courses", {
     method: "POST",
     body: formData,
     headers: {}, // Let browser set Content-Type for FormData

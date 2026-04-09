@@ -36,11 +36,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log("[Auth] Fetching current user...");
       const currentUser = await getCurrentUser();
-      console.log("[Auth] User fetched:", currentUser);
+      console.log("[Auth] User fetched successfully:", currentUser);
       
       // Only set user if token hasn't changed (another tab didn't login)
       if (getAuthToken() === tokenAtStart) {
         setUser(currentUser);
+        console.log("[Auth] User set in context");
       } else {
         console.log("[Auth] Token changed during fetch, ignoring response");
       }
@@ -61,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Don't clear - let the other tab's event handle updating state
       }
     } finally {
+      console.log("[Auth] fetchUser complete, setting isLoading false");
       setIsLoading(false);
     }
   };

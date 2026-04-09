@@ -172,21 +172,6 @@ export interface CourseListResponse {
 export interface CreateCourseRequest {
   title: string;
   description: string;
-  level: string;
-  tags: string[];
-  duration: number;
-  content?: {
-    modules: {
-      title: string;
-      lessons: {
-        title: string;
-        type: LessonType;
-        content?: string;
-        mediaUrl?: string;
-        duration?: number;
-      }[];
-    }[];
-  };
 }
 
 export interface UpdateCourseRequest {

@@ -9,8 +9,12 @@ export default function DashboardPage() {
   const { user, hasRole } = useAuth();
   const router = useRouter();
 
+  console.log("[DashboardPage] Rendering, user:", user, "hasRole(INSTRUCTOR):", hasRole(RoleName.INSTRUCTOR));
+
   useEffect(() => {
+    console.log("[DashboardPage] useEffect triggered, user:", user);
     if (user) {
+      console.log("[DashboardPage] User role:", user.role, "hasRole(INSTRUCTOR):", hasRole(RoleName.INSTRUCTOR));
       if (hasRole(RoleName.ADMIN)) {
         router.push("/dashboard/admin/users");
       } else if (hasRole(RoleName.INSTRUCTOR)) {
@@ -18,6 +22,8 @@ export default function DashboardPage() {
       } else {
         router.push("/dashboard/learner/courses");
       }
+    } else {
+      console.log("[DashboardPage] No user yet");
     }
   }, [user, hasRole, router]);
 
