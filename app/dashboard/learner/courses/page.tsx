@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchPublishedCourses } from "@/lib/api/courses";
+import { fetchPublishedCoursesWithCoverImages } from "@/lib/api/courses";
 import { RoleGuard } from "@/components/shared/role-guard";
 import { EmptyState } from "@/components/shared/empty-state";
 import { CourseResponse, RoleName } from "@/lib/api/types";
@@ -23,14 +23,14 @@ function BrowseCoursesContent() {
   const loadCourses = async () => {
     setIsLoading(true);
     try {
-      const response = await fetchPublishedCourses(
+      const response = await fetchPublishedCoursesWithCoverImages(
         page,
         pageSize,
         selectedLevel || undefined,
         undefined
       );
-      setCourses(response.content || []);
-      setTotalPages(response.totalPages || 0);
+      setCourses(response);
+      setTotalPages(Math.ceil(response.length / pageSize));
     } catch (error) {
       if (error instanceof APIError) {
         toast.error(error.message);
@@ -129,16 +129,16 @@ function BrowseCoursesContent() {
           {filteredCourses.map((course) => (
             <div key={course.id} className="rounded-lg border border-border bg-card overflow-hidden hover:border-primary/30 transition-colors">
               <div className="h-40 bg-secondary flex items-center justify-center">
-                {course.coverImage ? (
-                  <img src={course.coverImage} alt={course.title} className="w-full h-full object-cover" />
+                {course.coverImageUrl ? (
+                  <img src={course.coverImageUrl} alt={course.title} className="w-full h-full object-cover" />
                 ) : (
                   <BookOpen className="w-12 h-12 text-muted-foreground" />
                 )}
               </div>
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${getLevelBadgeClass(course.level)}`}>
-                    {course.level}
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${getLevelBadgeClass(course.level || "")}`}>
+                    {course.level || "All Levels"}
                   </span>
                   <span className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Clock className="w-3 h-3" />

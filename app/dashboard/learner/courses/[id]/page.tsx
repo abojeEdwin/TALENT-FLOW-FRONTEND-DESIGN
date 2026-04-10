@@ -83,21 +83,21 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
                 Created
               </label>
               <p className="mt-1 text-lg font-semibold text-gray-900">
-                {new Date(course.createdAt).toLocaleDateString()}
+                {course.createdAt ? new Date(course.createdAt).toLocaleDateString() : "N/A"}
               </p>
             </div>
           </div>
         </div>
 
-        {course.tags && course.tags.length > 0 && (
+        {course.tags && course.tags.length > 0 ? (
           <div className="flex flex-wrap gap-2">
-            {course.tags.map((tag) => (
+            {course.tags!.map((tag) => (
               <span key={tag} className="inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm">
-                {tag}
-              </span>
-            ))}
+                    {tag}
+                  </span>
+                ))}
           </div>
-        )}
+        ) : null}
 
         <EmptyState
           title="Lessons coming soon"

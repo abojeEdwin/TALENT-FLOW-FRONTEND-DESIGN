@@ -151,14 +151,18 @@ export interface CourseResponse {
   title: string;
   description: string;
   instructor?: UserResponse;
-  status: CourseStatus;
-  coverImage?: string;
-  introVideo?: string;
-  duration: number;
-  level: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
+  status: string;
+  coverImageUrl?: string;
+  introVideoUrl?: string;
+  publishedAt?: string;
+  archivedAt?: string;
+  createdByUserId?: string;
+  instructorIds?: string[];
+  level?: string;
+  duration?: number;
+  tags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CourseListResponse {
@@ -280,6 +284,12 @@ export interface EnrollmentResponse {
   enrolledAt: string;
   progress: number;
   completed: boolean;
+}
+
+// Instructor Assignment
+export interface AssignInstructorsRequest {
+  primaryInstructorId: string;
+  coInstructorIds?: string[];
 }
 
 // Error Response

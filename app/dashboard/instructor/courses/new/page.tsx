@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,24 +13,49 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Upload, X, FileVideo, Image } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CreateCoursePage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [introVideo, setIntroVideo] = useState<File | null>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<CreateCourseFormData>({
     resolver: zodResolver(CreateCourseSchema),
   });
 
+  const handleFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setFile: React.Dispatch<React.SetStateAction<File | null>>
+  ) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFile(file);
+    }
+  };
+
+  const removeFile = (setFile: React.Dispatch<React.SetStateAction<File | null>>, inputRef: React.RefObject<HTMLInputElement | null>) => {
+    setFile(null);
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
+  };
+
   const onSubmit = async (data: CreateCourseFormData) => {
     try {
       setIsLoading(true);
-      await createCourse({
-        title: data.title,
-        description: data.description,
-      });
+      await createCourse(
+        {
+          title: data.title,
+          description: data.description,
+        },
+        coverImage || undefined,
+        introVideo || undefined
+      );
       toast.success('Course created successfully');
       router.push('/dashboard/instructor/courses');
     } catch (error) {
@@ -47,13 +72,11 @@ export default function CreateCoursePage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      {/* Back Button */}
       <Link href="/dashboard/instructor/courses" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
         <ArrowLeft className="w-4 h-4" />
         Back to Courses
       </Link>
 
-      {/* Header */}
       <div>
         <h1 className="text-3xl font-bold mb-2">Create New Course</h1>
         <p className="text-muted-foreground">Set up the basic information for your course</p>
@@ -69,7 +92,6 @@ export default function CreateCoursePage() {
 
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Title */}
             <div className="space-y-2">
               <Label htmlFor="title">Course Title</Label>
               <Input
@@ -83,7 +105,6 @@ export default function CreateCoursePage() {
               )}
             </div>
 
-            {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
@@ -98,7 +119,84 @@ export default function CreateCoursePage() {
               )}
             </div>
 
-            {/* Buttons */}
+            {/* Cover Image Upload */}
+            <div className="space-y-2">
+              <Label>Cover Image (Optional)</Label>
+              <input
+                type="file"
+                ref={coverInputRef}
+                onChange={(e) => handleFileChange(e, setCoverImage)}
+                accept="image/*"
+                className="hidden"
+              />
+              {coverImage ? (
+                <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50">
+                  <Image className="h-8 w-8 text-muted-foreground" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{coverImage.name}</p>
+                    <p className="text-xs text-muted-foreground">{(coverImage.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeFile(setCoverImage, coverInputRef)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => coverInputRef.current?.click()}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Cover Image
+                </Button>
+              )}
+            </div>
+
+            {/* Intro Video Upload */}
+            <div className="space-y-2">
+              <Label>Intro Video (Optional)</Label>
+              <input
+                type="file"
+                ref={videoInputRef}
+                onChange={(e) => handleFileChange(e, setIntroVideo)}
+                accept="video/*"
+                className="hidden"
+              />
+              {introVideo ? (
+                <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50">
+                  <FileVideo className="h-8 w-8 text-muted-foreground" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{introVideo.name}</p>
+                    <p className="text-xs text-muted-foreground">{(introVideo.size / (1024 * 1024)).toFixed(1)} MB</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeFile(setIntroVideo, videoInputRef)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => videoInputRef.current?.click()}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Intro Video
+                </Button>
+              )}
+            </div>
+
             <div className="flex gap-3 pt-4">
               <Button type="submit" disabled={isLoading} className="flex-1">
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -117,7 +215,6 @@ export default function CreateCoursePage() {
         </CardContent>
       </Card>
 
-      {/* Next Steps */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Next Steps</CardTitle>
@@ -127,7 +224,6 @@ export default function CreateCoursePage() {
             <li>Create basic course information (you are here)</li>
             <li>Add course content (lessons, videos, PDFs)</li>
             <li>Create assignments and quizzes</li>
-            <li>Set course pricing and enrollment options</li>
             <li>Publish your course</li>
           </ol>
         </CardContent>

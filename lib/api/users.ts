@@ -24,6 +24,15 @@ export async function fetchUsers(
   return fetchAPI<UserListResponse>(`/admin/users/`);
 }
 
+export async function fetchInstructors(): Promise<UserResponse[]> {
+  const params = new URLSearchParams({
+    size: "100",
+  });
+
+  const response = await fetchAPI<{ content: UserResponse[] }>(`/admin/users/instructors?${params.toString()}`);
+  return response.content || [];
+}
+
 export async function fetchUserById(id: string): Promise<UserResponse> {
   return fetchAPI<UserResponse>(`/users/${id}`);
 }

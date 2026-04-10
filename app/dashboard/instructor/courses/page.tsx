@@ -5,7 +5,7 @@ import { RoleGuard } from "@/components/shared/role-guard";
 import { EmptyState } from "@/components/shared/empty-state";
 import { RoleName } from "@/lib/api/types";
 import { fetchMyCourses } from "@/lib/api/courses";
-import { CourseResponse, CourseListResponse } from "@/lib/api/types";
+import { CourseResponse } from "@/lib/api/types";
 import { APIError } from "@/lib/api/client";
 import { Plus, BookOpen, Users, Video, TrendingUp, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -117,35 +117,55 @@ function InstructorDashboardContent() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {courses.map((course) => (
-            <Link key={course.id} href={`/dashboard/instructor/courses/${course.id}`}>
-              <div className="rounded-lg border border-border bg-card p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="flex items-start justify-between">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <BookOpen className="w-5 h-5 text-primary" />
-                  </div>
-                  <button className="text-muted-foreground hover:text-foreground">
-                    <MoreVertical className="w-4 h-4" />
-                  </button>
-                </div>
-                <h3 className="mt-4 font-semibold text-foreground line-clamp-2">{course.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                  {course.description || "No description"}
-                </p>
-                <div className="mt-4 flex items-center gap-2">
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    course.status === "PUBLISHED" 
-                      ? "bg-green-100 text-green-800" 
-                      : "bg-yellow-100 text-yellow-800"
-                  }`}>
-                    {course.status || "DRAFT"}
-                  </span>
-                </div>
-              </div>
-            </Link>
+            <CourseCard key={course.id} course={course} />
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+function CourseCard({ course }: { course: CourseResponse }) {
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <Link href={`/dashboard/instructor/courses/${course.id}`}>
+      <div className="rounded-lg border border-border bg-card p-6 hover:shadow-lg transition-shadow cursor-pointer">
+        <div className="flex items-start justify-between">
+          <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+            {course.coverImageUrl && !imgError ? (
+              <img 
+                src={course.coverImageUrl} 
+                alt={course.title}
+                className="w-full h-full object-cover"
+                onError={() => {
+                  console.log("Image failed to load:", course.coverImageUrl);
+                  setImgError(true);
+                }}
+              />
+            ) : (
+              <BookOpen className="w-5 h-5 text-primary" />
+            )}
+          </div>
+          <button className="text-muted-foreground hover:text-foreground">
+            <MoreVertical className="w-4 h-4" />
+          </button>
+        </div>
+        <h3 className="mt-4 font-semibold text-foreground line-clamp-2">{course.title}</h3>
+        <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+          {course.description || "No description"}
+        </p>
+        <div className="mt-4 flex items-center gap-2">
+          <span className={`text-xs px-2 py-1 rounded-full ${
+            course.status === "PUBLISHED" 
+              ? "bg-green-100 text-green-800" 
+              : "bg-yellow-100 text-yellow-800"
+          }`}>
+            {course.status || "DRAFT"}
+          </span>
+        </div>
+      </div>
+    </Link>
   );
 }
 

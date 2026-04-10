@@ -28,14 +28,11 @@ async function fetchAPI<T>(
 ): Promise<T> {
   const {
     skipAuth = false,
-    headers: customHeaders = {},
+    headers: customHeaders,
     ...fetchOptions
   } = options;
 
-  const headers = {
-    "Content-Type": "application/json",
-    ...customHeaders,
-  } as Record<string, string>;
+  const headers: Record<string, string> = {};
 
   // Add JWT token if not skipping auth
   if (!skipAuth) {
@@ -43,6 +40,20 @@ async function fetchAPI<T>(
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
+  }
+
+  // If body is FormData, don't set Content-Type (let browser set it with boundary)
+  if (!(fetchOptions.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  // Add custom headers (but don't override Content-Type for FormData)
+  if (customHeaders) {
+    Object.entries(customHeaders).forEach(([key, value]) => {
+      if (key.toLowerCase() !== 'content-type' || !(fetchOptions.body instanceof FormData)) {
+        headers[key] = value;
+      }
+    });
   }
 
   const url = `${API_BASE_URL}/${API_VERSION}${endpoint}`;
