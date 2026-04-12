@@ -3,13 +3,13 @@
 import { useEffect, useState, use } from "react";
 import { RoleGuard } from "@/components/shared/role-guard";
 import { EmptyState } from "@/components/shared/empty-state";
-import { fetchCourseDetail, enrollCourse, fetchCourseCoverImagePresignedUrl } from "@/lib/api/courses";
-import { CourseDetailResponse, CourseResponse } from "@/lib/api/types";
+import { fetchCourseDetail, enrollCourse, fetchCourseCoverImagePresignedUrl, completeLesson } from "@/lib/api/courses";
+import { CourseDetailResponse, CourseResponse, LessonResponse } from "@/lib/api/types";
 import { APIError } from "@/lib/api/client";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Play, BookOpen, Clock, CheckCircle, Circle, ChevronDown, ChevronRight, GraduationCap } from "lucide-react";
+import { Play, BookOpen, Clock, CheckCircle, Circle, ChevronDown, ChevronRight, GraduationCap, FileText, Video, FileAudio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function CourseDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: string }> }) {
@@ -54,6 +54,17 @@ function CourseDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
     loadCourse();
   }, [courseId]);
 
+  const getFirstIncompleteLesson = () => {
+    if (!course?.modules) return null;
+    for (const module of course.modules) {
+      if (module.lessons) {
+        const incomplete = module.lessons.find((l: any) => !l.completed);
+        if (incomplete) return incomplete.id;
+      }
+    }
+    return null;
+  };
+
   const handleEnroll = async () => {
     setIsEnrolling(true);
     try {
@@ -69,6 +80,15 @@ function CourseDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
       }
     } finally {
       setIsEnrolling(false);
+    }
+  };
+
+  const handleContinueLearning = () => {
+    const firstLessonId = getFirstIncompleteLesson();
+    if (firstLessonId) {
+      router.push(`/dashboard/learner/courses/${courseId}/learn?lessonId=${firstLessonId}`);
+    } else {
+      router.push(`/dashboard/learner/courses/${courseId}/learn`);
     }
   };
 
@@ -180,21 +200,22 @@ function CourseDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
                       {expandedModules.has(module.id) && module.lessons && (
                         <div className="bg-muted/30 px-4 pb-4">
                           <div className="space-y-2 ml-11">
-                            {module.lessons.map((lesson: { id: string; title: string; type: string; completed?: boolean }) => (
-                              <div
+                            {module.lessons.map((lesson: { id: string; title: string; lessonType: string; completed?: boolean }) => (
+                              <button
                                 key={lesson.id}
-                                className="flex items-center gap-3 p-2 rounded hover:bg-background transition-colors"
+                                onClick={() => router.push(`/dashboard/learner/courses/${courseId}/learn?lessonId=${lesson.id}`)}
+                                className="w-full flex items-center gap-3 p-2 rounded hover:bg-background transition-colors text-left"
                               >
                                 {lesson.completed ? (
                                   <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                                 ) : (
                                   <Circle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                                 )}
-                                <span className="text-sm">{lesson.title}</span>
-                                <span className="text-xs text-muted-foreground ml-auto">
-                                  {lesson.type}
+                                <span className="text-sm flex-1">{lesson.title}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {lesson.lessonType === 'VIDEO' ? <Video className="w-3 h-3" /> : lesson.lessonType === 'PDF' ? <FileText className="w-3 h-3" /> : <FileAudio className="w-3 h-3" />}
                                 </span>
-                              </div>
+                              </button>
                             ))}
                           </div>
                         </div>
@@ -227,7 +248,7 @@ function CourseDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
                     />
                   </div>
                 </div>
-                <Button className="w-full" onClick={() => router.push(`/dashboard/learner/courses/${courseId}/learn`)}>
+                <Button className="w-full" onClick={handleContinueLearning}>
                   Continue Learning
                 </Button>
               </div>

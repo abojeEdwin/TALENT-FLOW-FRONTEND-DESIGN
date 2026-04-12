@@ -63,6 +63,16 @@ export async function enrollCourse(courseId: string): Promise<CourseResponse> {
   });
 }
 
+export async function completeLesson(lessonId: string): Promise<any> {
+  return fetchAPI<any>(`/lessons/${lessonId}/complete`, {
+    method: "POST",
+  });
+}
+
+export async function fetchLessonDetail(lessonId: string): Promise<any> {
+  return fetchAPI<any>(`/instructor/lessons/${lessonId}`);
+}
+
 // Instructor endpoints
 export async function fetchInstructorCourses(): Promise<CourseResponse[]> {
   return fetchAPI<CourseResponse[]>("/instructor/my-courses");
