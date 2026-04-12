@@ -9,7 +9,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { BookOpen, Users, TrendingUp, Award, Plus } from 'lucide-react';
 import { RoleGuard } from '@/components/shared/role-guard';
 import { RoleName } from '@/lib/api/types';
-import { fetchMyCourses } from '@/lib/api/courses';
+import { fetchInstructorCourses } from '@/lib/api/courses';
 import { CourseListResponse, CourseResponse } from '@/lib/api/types';
 import { APIError } from '@/lib/api/client';
 import { toast } from 'sonner';
@@ -22,7 +22,7 @@ export default function InstructorDashboard() {
   useEffect(() => {
     const loadCourses = async () => {
       try {
-        const response: CourseResponse[] = await fetchMyCourses();
+        const response: CourseResponse[] = await fetchInstructorCourses();
         setCourses(response || []);
       } catch (error) {
         if (error instanceof APIError) {

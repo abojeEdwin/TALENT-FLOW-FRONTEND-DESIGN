@@ -8,8 +8,9 @@ import { CourseResponse, RoleName } from "@/lib/api/types";
 import { COURSE_LEVELS } from "@/lib/utils/constants";
 import { APIError } from "@/lib/api/client";
 import { toast } from "sonner";
-import { Search, Filter, BookOpen, Clock } from "lucide-react";
+import { Search, Filter, BookOpen, Clock, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 function BrowseCoursesContent() {
   const [courses, setCourses] = useState<CourseResponse[]>([]);
@@ -127,31 +128,38 @@ function BrowseCoursesContent() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredCourses.map((course) => (
-            <div key={course.id} className="rounded-lg border border-border bg-card overflow-hidden hover:border-primary/30 transition-colors">
-              <div className="h-40 bg-secondary flex items-center justify-center">
-                {course.coverImageUrl ? (
-                  <img src={course.coverImageUrl} alt={course.title} className="w-full h-full object-cover" />
-                ) : (
-                  <BookOpen className="w-12 h-12 text-muted-foreground" />
-                )}
-              </div>
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${getLevelBadgeClass(course.level || "")}`}>
-                    {course.level || "All Levels"}
-                  </span>
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="w-3 h-3" />
-                    {course.duration || 0}h
-                  </span>
+            <Link key={course.id} href={`/dashboard/learner/courses/${course.id}`} className="block">
+              <div className="rounded-lg border border-border bg-card overflow-hidden hover:border-primary/30 transition-colors h-full">
+                <div className="h-40 bg-secondary flex items-center justify-center relative">
+                  {course.coverImageUrl ? (
+                    <img src={course.coverImageUrl} alt={course.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <BookOpen className="w-12 h-12 text-muted-foreground" />
+                  )}
+                  {course.introVideoUrl && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity">
+                      <Play className="w-12 h-12 text-white" />
+                    </div>
+                  )}
                 </div>
-                <h3 className="font-semibold text-foreground mb-2 line-clamp-1">{course.title}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{course.description}</p>
-                <Button className="w-full" variant="outline">
-                  View Course
-                </Button>
+                <div className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${getLevelBadgeClass(course.level || "")}`}>
+                      {course.level || "All Levels"}
+                    </span>
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="w-3 h-3" />
+                      {course.duration || 0}h
+                    </span>
+                  </div>
+                  <h3 className="font-semibold text-foreground mb-2 line-clamp-1">{course.title}</h3>
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{course.description}</p>
+                  <Button className="w-full" variant="outline">
+                    View Details
+                  </Button>
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

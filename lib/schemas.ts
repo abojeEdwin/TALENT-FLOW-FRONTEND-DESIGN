@@ -111,6 +111,34 @@ export const CreateAssignmentSchema = z.object({
 
 export type CreateAssignmentFormData = z.infer<typeof CreateAssignmentSchema>;
 
+// Module Schemas
+export const CreateModuleSchema = z.object({
+  title: z
+    .string()
+    .min(1, 'Title is required')
+    .max(200, 'Title must be at most 200 characters'),
+  description: z
+    .string()
+    .max(1000, 'Description must be at most 1000 characters')
+    .optional(),
+  position: z.number().int().positive('Position must be a positive number'),
+});
+
+export type CreateModuleFormData = z.infer<typeof CreateModuleSchema>;
+
+// Lesson Schemas
+export const CreateLessonSchema = z.object({
+  title: z
+    .string()
+    .min(1, 'Title is required')
+    .max(200, 'Title must be at most 200 characters'),
+  type: z.enum(['VIDEO', 'PDF', 'TEXT']),
+  content: z.string().optional(),
+  position: z.number().int().positive().optional(),
+});
+
+export type CreateLessonFormData = z.infer<typeof CreateLessonSchema>;
+
 // Admin Schemas
 export const UpdateUserRoleSchema = z.object({
   role: z.enum(['admin', 'instructor', 'learner']),

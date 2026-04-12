@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { RoleGuard } from "@/components/shared/role-guard";
 import { EmptyState } from "@/components/shared/empty-state";
 import { RoleName } from "@/lib/api/types";
-import { fetchMyCourses } from "@/lib/api/courses";
+import { fetchInstructorCourses } from "@/lib/api/courses";
 import { CourseResponse } from "@/lib/api/types";
 import { APIError } from "@/lib/api/client";
 import { Plus, BookOpen, Users, Video, TrendingUp, MoreVertical } from "lucide-react";
@@ -20,7 +20,7 @@ function InstructorDashboardContent() {
   useEffect(() => {
     const loadCourses = async () => {
       try {
-        const response: CourseResponse[] = await fetchMyCourses();
+        const response: CourseResponse[] = await fetchInstructorCourses();
         setCourses(response || []);
         setTotalCourses(response?.length || 0);
       } catch (error) {

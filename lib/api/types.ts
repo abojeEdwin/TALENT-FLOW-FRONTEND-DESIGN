@@ -187,17 +187,47 @@ export interface UpdateCourseRequest {
   status?: CourseStatus;
 }
 
+// Course Module DTOs
+export interface CourseDetailResponse {
+  id: string;
+  title: string;
+  description: string;
+  coverImageUrl?: string;
+  introVideoUrl?: string;
+  status: string;
+  progressPct: number;
+  modules: CourseModuleResponse[];
+}
+
+export interface CourseModuleResponse {
+  id: string;
+  title: string;
+  position: number;
+  lessons: LessonResponse[];
+}
+
+export interface CreateCourseModuleRequest {
+  title: string;
+  description?: string;
+  position?: number;
+}
+
+export interface CreateLessonRequest {
+  title: string;
+  type: LessonType;
+  content?: string;
+  position?: number;
+}
+
 // Lesson DTOs
 export interface LessonResponse {
   id: string;
   title: string;
   type: LessonType;
-  content?: string;
-  mediaUrl?: string;
-  duration?: number;
-  module: string;
-  createdAt: string;
-  updatedAt: string;
+  contentUrl?: string;
+  contentText?: string;
+  position: number;
+  completed?: boolean;
 }
 
 export interface CompleteLessonRequest {

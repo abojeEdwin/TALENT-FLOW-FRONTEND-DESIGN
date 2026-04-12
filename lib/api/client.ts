@@ -91,13 +91,18 @@ async function fetchAPI<T>(
       if (response.status === 401) {
         throw new APIError(401, { message: "Unauthorized" } as ErrorResponse);
       }
-      const errorData = data as ErrorResponse;
-      throw new APIError(response.status, {
-        ...errorData,
-        message: errorData.errors 
-          ? Object.values(errorData.errors).join(", ") 
-          : errorData.message || "Validation failed"
-      });
+      let errorMessage = "Unexpected server error";
+      if (typeof data === 'object' && data !== null) {
+        const errorData = data as Record<string, any>;
+        if (errorData.errors) {
+          errorMessage = Object.values(errorData.errors).join(", ");
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } else if (typeof data === 'string') {
+        errorMessage = data;
+      }
+      throw new APIError(response.status, { message: errorMessage } as ErrorResponse);
     }
 
     if (process.env.NODE_ENV === "development") {

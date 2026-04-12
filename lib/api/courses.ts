@@ -2,10 +2,15 @@ import { fetchAPI } from "./client";
 import {
   CourseListResponse,
   CourseResponse,
+  CourseDetailResponse,
   CreateCourseRequest,
   UpdateCourseRequest,
   EnrollmentResponse,
   AssignInstructorsRequest,
+  CourseModuleResponse,
+  CreateCourseModuleRequest,
+  LessonResponse,
+  CreateLessonRequest,
 } from "./types";
 
 // Learner endpoints
@@ -14,25 +19,16 @@ export async function fetchPublishedCourses(
   size: number = 20,
   level?: string,
   tags?: string[]
-): Promise<CourseListResponse> {
-  const params = new URLSearchParams({
-    page: page.toString(),
-    size: size.toString(),
-    status: "PUBLISHED",
-  });
-
-  if (level) params.append("level", level);
-  if (tags?.length) tags.forEach((tag) => params.append("tags", tag));
-
-  return fetchAPI<CourseListResponse>(`/courses?${params.toString()}`);
+): Promise<CourseResponse[]> {
+  return fetchAPI<CourseResponse[]>(`/learner/courses`);
 }
 
-export async function fetchMyCourses(): Promise<CourseResponse[]> {
-  return fetchAPI<CourseResponse[]>("/instructor/my-courses");
+export async function fetchLearnerCourses(): Promise<CourseResponse[]> {
+  return fetchAPI<CourseResponse[]>("/learner/courses/my");
 }
 
-export async function fetchMyCoursesWithCoverImages(): Promise<CourseResponse[]> {
-  const courses = await fetchMyCourses();
+export async function fetchLearnerCoursesWithCoverImages(): Promise<CourseResponse[]> {
+  const courses = await fetchLearnerCourses();
   
   if (!courses?.length) {
     return [];
@@ -54,16 +50,46 @@ export async function fetchMyCoursesWithCoverImages(): Promise<CourseResponse[]>
 }
 
 export async function fetchCourseById(id: string): Promise<CourseResponse> {
-  return fetchAPI<CourseResponse>(`/courses/${id}`);
+  return fetchAPI<CourseResponse>(`/learner/courses/${id}`);
 }
 
-export async function enrollCourse(courseId: string): Promise<EnrollmentResponse> {
-  return fetchAPI<EnrollmentResponse>(`/courses/${courseId}/enroll`, {
+export async function fetchCourseDetail(id: string): Promise<CourseDetailResponse> {
+  return fetchAPI<CourseDetailResponse>(`/learner/courses/${id}`);
+}
+
+export async function enrollCourse(courseId: string): Promise<CourseResponse> {
+  return fetchAPI<CourseResponse>(`/learner/courses/${courseId}/enroll`, {
     method: "POST",
   });
 }
 
 // Instructor endpoints
+export async function fetchInstructorCourses(): Promise<CourseResponse[]> {
+  return fetchAPI<CourseResponse[]>("/instructor/my-courses");
+}
+
+export async function fetchInstructorCoursesWithCoverImages(): Promise<CourseResponse[]> {
+  const courses = await fetchInstructorCourses();
+  
+  if (!courses?.length) {
+    return [];
+  }
+
+  const coursesWithImages = await Promise.all(
+    courses.map(async (course) => {
+      try {
+        const { presignedUrl } = await fetchCourseCoverImagePresignedUrl(course.id);
+        return { ...course, coverImageUrl: presignedUrl };
+      } catch (err) {
+        console.log("Failed to get cover image for course:", course.id, err);
+        return course;
+      }
+    })
+  );
+
+  return coursesWithImages;
+}
+
 export async function createCourse(
   data: CreateCourseRequest,
   coverImage?: File,
@@ -160,14 +186,14 @@ export async function fetchPublishedCoursesWithCoverImages(
   level?: string,
   tags?: string[]
 ): Promise<CourseResponse[]> {
-  const response = await fetchPublishedCourses(page, size, level, tags);
+  const courses = await fetchPublishedCourses(page, size, level, tags);
   
-  if (!response.content?.length) {
+  if (!courses?.length) {
     return [];
   }
 
   const coursesWithImages = await Promise.all(
-    response.content.map(async (course) => {
+    courses.map(async (course: CourseResponse) => {
       try {
         const { presignedUrl } = await fetchCourseCoverImagePresignedUrl(course.id);
         return { ...course, coverImageUrl: presignedUrl };
@@ -189,4 +215,54 @@ export async function assignInstructors(
     method: "PUT",
     body: JSON.stringify(data),
   });
+}
+
+// Course Module endpoints
+export async function createCourseModule(
+  courseId: string,
+  data: CreateCourseModuleRequest
+): Promise<CourseModuleResponse> {
+  return fetchAPI<CourseModuleResponse>(`/instructor/courses/${courseId}/modules`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function fetchCourseModules(courseId: string): Promise<CourseModuleResponse[]> {
+  return fetchAPI<CourseModuleResponse[]>(`/instructor/courses/${courseId}/modules`);
+}
+
+// Lesson endpoints
+export async function createLesson(
+  moduleId: string,
+  data: CreateLessonRequest
+): Promise<LessonResponse> {
+  return fetchAPI<LessonResponse>(`/instructor/modules/${moduleId}/lessons`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function createLessonWithFile(
+  moduleId: string,
+  title: string,
+  lessonType: string,
+  position: number,
+  file: File
+): Promise<LessonResponse> {
+  const formData = new FormData();
+  formData.append("title", title);
+  formData.append("lessonType", lessonType);
+  formData.append("position", position.toString());
+  formData.append("file", file);
+
+  return fetchAPI<LessonResponse>(`/instructor/modules/${moduleId}/lessons`, {
+    method: "POST",
+    body: formData,
+    headers: {},
+  });
+}
+
+export async function fetchModuleLessons(moduleId: string): Promise<LessonResponse[]> {
+  return fetchAPI<LessonResponse[]>(`/instructor/modules/${moduleId}/lessons`);
 }
