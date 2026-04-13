@@ -198,6 +198,73 @@ export interface ListResponse<T> {
 
 // Real-time WebSocket Types
 export interface WebSocketMessage {
-  type: 'LESSON_PROGRESS_UPDATE' | 'COURSE_UPDATE' | 'ASSIGNMENT_UPDATE';
+  type: 'LESSON_PROGRESS_UPDATE' | 'COURSE_UPDATE' | 'ASSIGNMENT_UPDATE' | 'NOTIFICATION';
   payload: Record<string, unknown>;
+}
+
+// Notification Types
+export type NotificationType =
+  | 'COURSE_COMPLETED'
+  | 'ASSIGNMENT_CREATED'
+  | 'ASSIGNMENT_GRADED'
+  | 'FEEDBACK_ADDED'
+  | 'ENROLLMENT_GRANTED'
+  | 'ENROLLMENT_REVOKED'
+  | 'ACCOUNT_STATUS_CHANGED'
+  | 'ROLE_CHANGED'
+  | 'ACCOUNT_DEACTIVATED'
+  | 'PASSWORD_RESET_TRIGGERED'
+  | 'TEAM_ALLOCATED'
+  | 'COURSE_PUBLISHED'
+  | 'COURSE_INSTRUCTORS_ASSIGNED'
+  | 'COURSE_INSTRUCTORS_UNASSIGNED'
+  | 'UPLOAD_STATUS'
+  | 'UPLOAD_FAILED_ESCALATION';
+
+export interface NotificationPayload {
+  courseId?: string;
+  courseTitle?: string;
+  assignmentId?: string;
+  assignmentTitle?: string;
+  submissionId?: string;
+  score?: number;
+  status?: string;
+  comment?: string;
+  progressPct?: number;
+  certificateQueued?: boolean;
+  userId?: string;
+  previousStatus?: string;
+  newStatus?: string;
+  previousRole?: string;
+  newRole?: string;
+  teamId?: string;
+  teamName?: string;
+  cohortId?: string;
+  teamRole?: string;
+  autoAllocated?: boolean;
+  instructorIds?: string[];
+  jobId?: string;
+  targetType?: string;
+  targetId?: string;
+  filename?: string;
+  error?: string;
+  initiatedByUserId?: string;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  payload?: NotificationPayload;
+  createdAt: string;
+  read: boolean;
+}
+
+export interface ProgressUpdateMessage {
+  learnerId: string;
+  courseId: string;
+  progressPct: number;
+  status: string;
 }
