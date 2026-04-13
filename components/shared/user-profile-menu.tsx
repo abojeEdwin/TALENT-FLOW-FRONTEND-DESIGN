@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/context/auth-context";
-import { LogOut, User } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 
 export function UserProfileMenu() {
@@ -24,7 +24,7 @@ export function UserProfileMenu() {
           className="inline-flex items-center justify-center rounded-lg bg-gray-100 p-2 hover:bg-gray-200"
           title="Profile Settings"
         >
-          <User className="h-5 w-5 text-gray-700" />
+          <Settings className="h-5 w-5 text-gray-700" />
         </Link>
 
         <button

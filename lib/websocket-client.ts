@@ -1,4 +1,4 @@
-import { Client, IMessage, StompConfig } from '@stomp/stompjs';
+import { Client, IMessage } from '@stomp/stompjs';
 import { WebSocketMessage } from './types';
 
 type MessageHandler = (message: WebSocketMessage) => void;
@@ -10,10 +10,11 @@ export class WebSocketClient {
   private accessToken: string | null = null;
   private messageHandlers: Set<MessageHandler> = new Set();
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
-  private reconnectDelay = 3000;
+  private maxReconnectAttempts = 2;
+  private reconnectDelay = 10000;
   private isIntentionallyClosed = false;
   private subscriptions: Map<string, (() => void) | null> = new Map();
+  private isConnecting = false;
 
   private constructor(url: string) {
     this.url = url;
@@ -27,49 +28,64 @@ export class WebSocketClient {
     return WebSocketClient.instance;
   }
 
+  static resetInstance(): void {
+    if (WebSocketClient.instance) {
+      WebSocketClient.instance.disconnect();
+      WebSocketClient.instance = null as any;
+    }
+  }
+
   connect(accessToken: string): Promise<void> {
-    console.log('[STOMP] connect() called with URL:', this.url);
     return new Promise((resolve, reject) => {
-      try {
-        this.accessToken = accessToken;
-        this.isIntentionallyClosed = false;
-
-        this.client = new Client({
-          webSocketFactory: () => {
-            const wsUrl = new URL(this.url);
-            wsUrl.searchParams.append('token', accessToken);
-            console.log('[STOMP] Creating WebSocket to:', wsUrl.toString());
-            return new WebSocket(wsUrl.toString());
-          },
-          reconnectDelay: this.reconnectDelay,
-          heartbeatIncoming: 15000,
-          heartbeatOutgoing: 15000,
-          onConnect: (frame) => {
-            console.log('[STOMP] Connected');
-            this.reconnectAttempts = 0;
-            this.resubscribeTopics();
-            resolve();
-          },
-          onDisconnect: (frame) => {
-            console.log('[STOMP] Disconnected');
-            if (!this.isIntentionallyClosed) {
-              this.attemptReconnect();
-            }
-          },
-          onStompError: (frame) => {
-            console.error('[STOMP] Error:', frame.headers['message']);
-          },
-          onWebSocketError: (error) => {
-            console.error('[STOMP] WebSocket Error:', error);
-          },
-        });
-
-        this.client.activate();
-        console.log('[STOMP] Client activated');
-      } catch (error) {
-        console.error('[STOMP] Connect error:', error);
-        reject(error);
+      if (this.isConnecting) {
+        resolve();
+        return;
       }
+
+      if (this.client?.connected) {
+        resolve();
+        return;
+      }
+
+      this.isConnecting = true;
+      this.accessToken = accessToken;
+      this.isIntentionallyClosed = false;
+
+      this.client = new Client({
+        webSocketFactory: () => {
+          const wsUrl = new URL(this.url);
+          wsUrl.searchParams.append('token', accessToken);
+          return new WebSocket(wsUrl.toString());
+        },
+        reconnectDelay: 0,
+        heartbeatIncoming: 30000,
+        heartbeatOutgoing: 30000,
+        onConnect: () => {
+          this.reconnectAttempts = 0;
+          this.isConnecting = false;
+          this.resubscribeTopics();
+          resolve();
+        },
+        onDisconnect: () => {
+          this.isConnecting = false;
+          if (!this.isIntentionallyClosed && this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.reconnectAttempts++;
+            setTimeout(() => {
+              if (this.accessToken && !this.isIntentionallyClosed) {
+                this.client?.activate();
+              }
+            }, this.reconnectDelay);
+          }
+        },
+        onStompError: (frame) => {
+          this.isConnecting = false;
+        },
+        onWebSocketError: () => {
+          this.isConnecting = false;
+        },
+      });
+
+      this.client.activate();
     });
   }
 
@@ -87,24 +103,6 @@ export class WebSocketClient {
     });
   }
 
-  private attemptReconnect() {
-    if (this.reconnectAttempts < this.maxReconnectAttempts && this.accessToken) {
-      this.reconnectAttempts++;
-      console.log(
-        `[STOMP] Attempting reconnect ${this.reconnectAttempts}/${this.maxReconnectAttempts}`
-      );
-      setTimeout(() => {
-        if (this.accessToken) {
-          this.connect(this.accessToken).catch((error) => {
-            console.error('[STOMP] Reconnect failed:', error);
-          });
-        }
-      }, this.reconnectDelay);
-    } else {
-      console.log('[STOMP] Max reconnect attempts reached');
-    }
-  }
-
   private handleMessage(event: IMessage) {
     try {
       const body = JSON.parse(event.body);
@@ -112,13 +110,9 @@ export class WebSocketClient {
       this.messageHandlers.forEach((handler) => {
         try {
           handler(message);
-        } catch (error) {
-          console.error('[STOMP] Handler error:', error);
-        }
+        } catch {}
       });
-    } catch (error) {
-      console.error('[STOMP] Message parse error:', error);
-    }
+    } catch {}
   }
 
   subscribe(handler: MessageHandler): () => void {
@@ -132,7 +126,6 @@ export class WebSocketClient {
   subscribeToTopic<T>(topic: string, handler: (message: T) => void): () => void {
     if (!this.client || !this.client.connected) {
       this.subscriptions.set(topic, null);
-      console.log('[STOMP] Queued subscription:', topic);
       return () => {
         this.subscriptions.delete(topic);
       };
@@ -142,9 +135,7 @@ export class WebSocketClient {
       try {
         const body = JSON.parse(message.body);
         handler(body as T);
-      } catch (error) {
-        console.error('[STOMP] Parse error:', error);
-      }
+      } catch {}
     });
 
     this.subscriptions.set(topic, () => subscription.unsubscribe());
@@ -163,8 +154,7 @@ export class WebSocketClient {
           body: JSON.stringify(message.payload),
         });
         return true;
-      } catch (error) {
-        console.error('[STOMP] Send error:', error);
+      } catch {
         return false;
       }
     }
@@ -174,6 +164,7 @@ export class WebSocketClient {
   disconnect() {
     this.isIntentionallyClosed = true;
     this.subscriptions.clear();
+    this.isConnecting = false;
     if (this.client) {
       this.client.deactivate();
       this.client = null;

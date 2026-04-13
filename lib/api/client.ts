@@ -59,16 +59,8 @@ async function fetchAPI<T>(
   const url = `${API_BASE_URL}/${API_VERSION}${endpoint}`;
 
   try {
-    if (process.env.NODE_ENV === "development") {
-      console.log("API Request:", {
-        method: fetchOptions.method || "GET",
-        url,
-        body: fetchOptions.body,
-      });
-    }
-
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     const response = await fetch(url, {
       ...fetchOptions,
@@ -81,6 +73,12 @@ async function fetchAPI<T>(
     const contentType = response.headers.get("content-type");
     let data: any;
 
+    if (!response.ok && response.status !== 404) {
+      if (response.status === 401) {
+        throw new APIError(401, { message: "Unauthorized" } as ErrorResponse);
+      }
+    }
+
     if (contentType?.includes("application/json")) {
       data = await response.json();
     } else {
@@ -88,8 +86,12 @@ async function fetchAPI<T>(
     }
 
     if (!response.ok) {
+      console.log("[API] Error response:", { url, status: response.status, body: data });
       if (response.status === 401) {
         throw new APIError(401, { message: "Unauthorized" } as ErrorResponse);
+      }
+      if (response.status === 404) {
+        console.log("[API] 404 Not Found for:", url);
       }
       let errorMessage = "Unexpected server error";
       if (typeof data === 'object' && data !== null) {
@@ -103,14 +105,6 @@ async function fetchAPI<T>(
         errorMessage = data;
       }
       throw new APIError(response.status, { message: errorMessage } as ErrorResponse);
-    }
-
-    if (process.env.NODE_ENV === "development") {
-      console.log("API Response:", {
-        url,
-        status: response.status,
-        data,
-      });
     }
 
     return data as T;

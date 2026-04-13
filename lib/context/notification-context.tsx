@@ -6,16 +6,24 @@ import { wsClient } from "@/lib/websocket-client";
 import { getAuthToken } from "@/lib/api/auth";
 import { useAuth } from "./auth-context";
 import { toast } from "sonner";
+import {
+  getNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  clearAllNotifications,
+} from "@/lib/api/notifications";
 
 interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
   isConnected: boolean;
+  isLoading: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   clearAll: () => void;
+  refresh: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -32,7 +40,24 @@ function createNotificationFromPayload(
     message: (payload.message as string) || "You have a new notification",
     payload: payload as Notification["payload"],
     createdAt: (payload.createdAt as string) || new Date().toISOString(),
-    read: false,
+    read: (payload.read as boolean) ?? false,
+  };
+}
+
+function transformNotification(apiNotification: any): Notification {
+  let createdAtStr = apiNotification.createdAt;
+  if (createdAtStr && typeof createdAtStr === "string") {
+    createdAtStr = createdAtStr.replace("T", " ").substring(0, 19);
+  }
+  return {
+    id: apiNotification.id || "",
+    userId: "",
+    type: apiNotification.type || "ASSIGNMENT_CREATED",
+    title: apiNotification.title || "",
+    message: apiNotification.message || "",
+    payload: apiNotification.payload,
+    createdAt: createdAtStr || new Date().toISOString(),
+    read: apiNotification.read || false,
   };
 }
 
@@ -57,12 +82,12 @@ const NOTIFICATION_ICONS: Record<NotificationType, string> = {
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const userIdRef = useRef<string | null>(null);
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
 
   useEffect(() => {
     if (user?.id) {
@@ -70,8 +95,21 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }, [user]);
 
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await getNotifications(0, 50);
+      const transformed = response.data.map(transformNotification);
+      setNotifications(transformed);
+      setUnreadCount(response.unreadCount);
+    } catch {
+      console.log("[Notification] REST API unavailable");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const handleNotificationMessage = useCallback((message: any) => {
-    console.log('[Notification] Received:', message);
     const payload = message?.payload || message;
 
     if (payload && (payload.type || payload.title)) {
@@ -79,6 +117,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const notification = createNotificationFromPayload(payload, uid);
 
       setNotifications((prev) => [notification, ...prev].slice(0, 50));
+      setUnreadCount((prev) => prev + 1);
 
       const icon = NOTIFICATION_ICONS[notification.type] || "🔔";
       toast.success(`${icon} ${notification.title}`, {
@@ -86,53 +125,84 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         duration: 5000,
       });
     }
-  }, []);
+  }, [unreadCount]);
 
   const connect = useCallback(async () => {
     const token = getAuthToken();
-    if (!token || isConnecting) {
-      console.log('[Notification] No token or already connecting, skipping connect');
+    if (!token || isConnecting || isConnected) {
+      console.log("[Notification] Already connected or connecting, skipping");
       return;
     }
 
+    console.log("[Notification] Attempting to connect...");
     setIsConnecting(true);
-    const currentUserId = userIdRef.current || user?.id || 'current';
+    const currentUserId = user?.id || userIdRef.current || 'current';
 
     try {
-      console.log('[Notification] Connecting to WebSocket...');
-      await wsClient.connect(token);
-      console.log('[Notification] Connected, setting state...');
-      setIsConnected(true);
-
-      const topic = `/topic/notifications/${currentUserId}`;
-      console.log('[Notification] Subscribing to:', topic);
-      
-      wsClient.subscribeToTopic(topic, handleNotificationMessage);
-    } catch (error) {
-      console.error("[Notification] WebSocket connection failed:", error);
-    } finally {
-      setIsConnecting(false);
+      await fetchNotifications();
+      console.log("[Notification] Fetched historical notifications");
+    } catch (err) {
+      console.log("[Notification] REST failed:", err);
     }
-  }, [handleNotificationMessage, user, isConnecting]);
+
+    try {
+      await wsClient.connect(token);
+      console.log("[Notification] WebSocket connected");
+      setIsConnected(true);
+      const topic = `/topic/notifications/${currentUserId}`;
+      wsClient.subscribeToTopic(topic, handleNotificationMessage);
+      console.log("[Notification] Subscribed to", topic);
+    } catch (err) {
+      console.log("[Notification] WebSocket failed:", err);
+      setIsConnected(false);
+    }
+
+    setIsConnecting(false);
+  }, [handleNotificationMessage, user, isConnecting, isConnected, fetchNotifications]);
 
   const disconnect = useCallback(() => {
     wsClient.disconnect();
     setIsConnected(false);
   }, []);
 
-  const markAsRead = useCallback((id: string) => {
+  const markAsRead = useCallback(async (id: string) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+
+    try {
+      await markNotificationAsRead(id);
+    } catch (error) {
+      console.error("[Notification] Failed to mark as read:", error);
+    }
   }, []);
 
-  const markAllAsRead = useCallback(() => {
+  const markAllAsRead = useCallback(async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setUnreadCount(0);
+
+    try {
+      await markAllNotificationsAsRead();
+    } catch (error) {
+      console.error("[Notification] Failed to mark all as read:", error);
+    }
   }, []);
 
-  const clearAll = useCallback(() => {
+  const clearAll = useCallback(async () => {
     setNotifications([]);
+    setUnreadCount(0);
+
+    try {
+      await clearAllNotifications();
+    } catch (error) {
+      console.error("[Notification] Failed to clear notifications:", error);
+    }
   }, []);
+
+  const refresh = useCallback(async () => {
+    await fetchNotifications();
+  }, [fetchNotifications]);
 
   return (
     <NotificationContext.Provider
@@ -140,11 +210,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         notifications,
         unreadCount,
         isConnected,
+        isLoading,
         connect,
         disconnect,
         markAsRead,
         markAllAsRead,
         clearAll,
+        refresh,
       }}
     >
       {children}

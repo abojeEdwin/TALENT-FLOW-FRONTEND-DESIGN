@@ -29,27 +29,28 @@ export function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
     try {
-      console.log("[Login] Calling loginUser...");
       const response = await loginUser(data.email, data.password);
-      console.log("[Login] loginUser success, response.user:", response.user);
-      
-      console.log("[Login] Setting auth token...");
       setAuthToken(response.accessToken);
-      console.log("[Login] Setting user in context...");
       setUser(response.user);
-      
-      console.log("[Login] Redirecting to /dashboard...");
       toast.success(`Welcome, ${response.user.firstName}!`);
       router.push("/dashboard");
     } catch (error) {
       if (error instanceof APIError) {
-        if (error.data.errors) {
+        if (error.status === 404) {
+          toast.error("Unable to connect to server. Please try again later.");
+        } else if (error.status === 401) {
+          toast.error("Invalid email or password");
+        } else if (error.status >= 500) {
+          toast.error("Server error. Please try again later.");
+        } else if (error.data.errors) {
           Object.entries(error.data.errors).forEach(([field, message]) => {
             setError(field as any, { message });
           });
         } else {
-          toast.error(error.message || "Invalid credentials");
+          toast.error(error.message || "Login failed");
         }
+      } else if (error instanceof Error && error.message === "Network error") {
+        toast.error("Unable to connect to server. Please check your connection.");
       } else {
         toast.error("An error occurred during login");
       }
