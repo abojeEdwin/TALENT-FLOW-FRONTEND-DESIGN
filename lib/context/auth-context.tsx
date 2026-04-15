@@ -1,8 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { AuthResponse } from "@/lib/api/types";
 import { getCurrentUser, logoutUser, setAuthToken, getAuthToken } from "@/lib/api/auth";
+import { useRouter } from "next/navigation";
 
 interface AuthContextType {
   user: AuthResponse | null;
@@ -19,63 +20,47 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const tokenRef = useRef<string | null>(null);
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     const token = getAuthToken();
-    console.log("[Auth] Bootstrap - token exists:", !!token);
+    tokenRef.current = token;
     
     if (!token) {
-      console.log("[Auth] No token, setting isLoading false");
       setIsLoading(false);
       return;
     }
 
-    // Capture the token we're using - don't switch users if token changed
     const tokenAtStart = token;
 
     try {
-      console.log("[Auth] Fetching current user...");
       const currentUser = await getCurrentUser();
-      console.log("[Auth] User fetched successfully:", currentUser);
       
-      // Only set user if token hasn't changed (another tab didn't login)
       if (getAuthToken() === tokenAtStart) {
         setUser(currentUser);
-        console.log("[Auth] User set in context");
-      } else {
-        console.log("[Auth] Token changed during fetch, ignoring response");
       }
-    } catch (error) {
-      console.log("[Auth] Error fetching user:", error);
-      // Check if token still exists - it might have been replaced by another tab
+    } catch {
       const currentToken = getAuthToken();
       
-      // Only clear if token hasn't changed (meaning our own token is invalid)
-      // If token changed (another tab logged in), don't clear - that tab will handle it
       if (currentToken === tokenAtStart) {
-        // Our token is invalid (401 from server) - clear session
-        console.log("[Auth] Our token invalid, clearing session");
         setAuthToken(null);
         setUser(null);
-      } else {
-        console.log("[Auth] Token changed by another tab, ignoring");
-        // Don't clear - let the other tab's event handle updating state
       }
     } finally {
-      console.log("[Auth] fetchUser complete, setting isLoading false");
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUser();
-  }, []);
+  }, [fetchUser]);
 
-  // Listen for storage changes (login/logout in another tab)
   useEffect(() => {
     const handleAuthChange = () => {
-      console.log("[Auth] Storage changed, re-fetching user...");
-      fetchUser();
+      if (getAuthToken() !== tokenRef.current) {
+        fetchUser();
+      }
     };
     
     window.addEventListener("storage", handleAuthChange);
@@ -83,46 +68,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       window.removeEventListener("storage", handleAuthChange);
     };
-  }, []);
+  }, [fetchUser]);
 
-  const hasRole = (role: string) => {
+  const hasRole = useCallback((role: string) => {
     return user?.role === role;
-  };
+  }, [user?.role]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await logoutUser();
-    } catch (error) {
+    } catch {
       // Ignore errors
     } finally {
       setAuthToken(null);
       setUser(null);
-      window.location.href = "/auth/login";
+      router.push("/auth/login");
     }
-  };
+  }, [router]);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     try {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
-    } catch (error) {
+    } catch {
       setAuthToken(null);
       setUser(null);
     }
-  };
+  }, []);
+
+  const value = useMemo(() => ({
+    user,
+    isLoading,
+    isAuthenticated: !!user,
+    hasRole,
+    logout,
+    refreshUser,
+    setUser,
+  }), [user, isLoading, hasRole, logout, refreshUser]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        isAuthenticated: !!user,
-        hasRole,
-        logout,
-        refreshUser,
-        setUser,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

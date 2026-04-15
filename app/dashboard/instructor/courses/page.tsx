@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { RoleGuard } from "@/components/shared/role-guard";
 import { EmptyState } from "@/components/shared/empty-state";
 import { RoleName } from "@/lib/api/types";
@@ -10,31 +11,34 @@ import { APIError } from "@/lib/api/client";
 import { Plus, BookOpen, Users, Video, TrendingUp, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 import { toast } from "sonner";
 
 function InstructorDashboardContent() {
   const [courses, setCourses] = useState<CourseResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [totalCourses, setTotalCourses] = useState(0);
+  const router = useRouter();
+
+  const loadCourses = useCallback(async () => {
+    try {
+      const response: CourseResponse[] = await fetchInstructorCourses();
+      setCourses(response || []);
+      setTotalCourses(response?.length || 0);
+    } catch (error) {
+      if (error instanceof APIError) {
+        toast.error(error.message);
+      }
+      setCourses([]);
+      setTotalCourses(0);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const loadCourses = async () => {
-      try {
-        const response: CourseResponse[] = await fetchInstructorCourses();
-        setCourses(response || []);
-        setTotalCourses(response?.length || 0);
-      } catch (error) {
-        if (error instanceof APIError) {
-          toast.error(error.message);
-        }
-        setCourses([]);
-        setTotalCourses(0);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     loadCourses();
-  }, []);
+  }, [loadCourses]);
 
   return (
     <div className="space-y-6">
@@ -111,7 +115,7 @@ function InstructorDashboardContent() {
           description="You haven't created any courses yet. Create your first course to get started."
           action={{
             label: "Create Course",
-            onClick: () => window.location.href = "/dashboard/instructor/courses/new",
+            onClick: () => router.push("/dashboard/instructor/courses/new"),
           }}
         />
       ) : (
@@ -132,16 +136,15 @@ function CourseCard({ course }: { course: CourseResponse }) {
     <Link href={`/dashboard/instructor/courses/${course.id}`}>
       <div className="rounded-lg border border-border bg-card p-6 hover:shadow-lg transition-shadow cursor-pointer">
         <div className="flex items-start justify-between">
-          <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+          <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden shrink-0 relative">
             {course.coverImageUrl && !imgError ? (
-              <img 
+              <Image 
                 src={course.coverImageUrl} 
                 alt={course.title}
-                className="w-full h-full object-cover"
-                onError={() => {
-                  console.log("Image failed to load:", course.coverImageUrl);
-                  setImgError(true);
-                }}
+                fill
+                className="object-cover"
+                sizes="64px"
+                onError={() => setImgError(true)}
               />
             ) : (
               <BookOpen className="w-5 h-5 text-primary" />

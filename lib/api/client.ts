@@ -71,7 +71,7 @@ async function fetchAPI<T>(
     clearTimeout(timeoutId);
 
     const contentType = response.headers.get("content-type");
-    let data: any;
+    let data: unknown;
 
     if (!response.ok && response.status !== 404) {
       if (response.status === 401) {
@@ -86,20 +86,16 @@ async function fetchAPI<T>(
     }
 
     if (!response.ok) {
-      console.log("[API] Error response:", { url, status: response.status, body: data });
       if (response.status === 401) {
         throw new APIError(401, { message: "Unauthorized" } as ErrorResponse);
       }
-      if (response.status === 404) {
-        console.log("[API] 404 Not Found for:", url);
-      }
       let errorMessage = "Unexpected server error";
       if (typeof data === 'object' && data !== null) {
-        const errorData = data as Record<string, any>;
+        const errorData = data as Record<string, unknown>;
         if (errorData.errors) {
-          errorMessage = Object.values(errorData.errors).join(", ");
+          errorMessage = Object.values(errorData.errors as Record<string, string>).join(", ");
         } else if (errorData.message) {
-          errorMessage = errorData.message;
+          errorMessage = errorData.message as string;
         }
       } else if (typeof data === 'string') {
         errorMessage = data;
@@ -110,14 +106,8 @@ async function fetchAPI<T>(
     return data as T;
   } catch (error) {
     if (error instanceof APIError) {
-      if (error.status === 401) {
-        console.log("Not authenticated");
-      } else {
-        console.error("API Error:", error);
-      }
       throw error;
     }
-    console.error("API Error:", error);
     if (error instanceof Error && error.name === "AbortError") {
       throw new Error("Request timeout");
     }

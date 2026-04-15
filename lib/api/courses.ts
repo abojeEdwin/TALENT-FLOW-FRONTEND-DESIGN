@@ -39,8 +39,7 @@ export async function fetchLearnerCoursesWithCoverImages(): Promise<CourseRespon
       try {
         const { presignedUrl } = await fetchCourseCoverImagePresignedUrl(course.id);
         return { ...course, coverImageUrl: presignedUrl };
-      } catch (err) {
-        console.log("Failed to get cover image for course:", course.id, err);
+      } catch {
         return course;
       }
     })
@@ -63,14 +62,24 @@ export async function enrollCourse(courseId: string): Promise<CourseResponse> {
   });
 }
 
-export async function completeLesson(lessonId: string): Promise<any> {
-  return fetchAPI<any>(`/lessons/${lessonId}/complete`, {
+export async function completeLesson(lessonId: string): Promise<void> {
+  return fetchAPI<void>(`/lessons/${lessonId}/complete`, {
     method: "POST",
   });
 }
 
-export async function fetchLessonDetail(lessonId: string): Promise<any> {
-  return fetchAPI<any>(`/instructor/lessons/${lessonId}`);
+export interface LessonDetailResponse {
+  id: string;
+  title: string;
+  type: string;
+  contentUrl?: string;
+  contentText?: string;
+  position: number;
+  completed?: boolean;
+}
+
+export async function fetchLessonDetail(lessonId: string): Promise<LessonDetailResponse> {
+  return fetchAPI<LessonDetailResponse>(`/instructor/lessons/${lessonId}`);
 }
 
 // Instructor endpoints
@@ -90,8 +99,7 @@ export async function fetchInstructorCoursesWithCoverImages(): Promise<CourseRes
       try {
         const { presignedUrl } = await fetchCourseCoverImagePresignedUrl(course.id);
         return { ...course, coverImageUrl: presignedUrl };
-      } catch (err) {
-        console.log("Failed to get cover image for course:", course.id, err);
+      } catch {
         return course;
       }
     })

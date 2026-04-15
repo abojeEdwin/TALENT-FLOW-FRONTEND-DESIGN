@@ -15,11 +15,8 @@ export function NotificationBell() {
   useEffect(() => {
     if (!hasConnected.current) {
       hasConnected.current = true;
-      console.log("[NotificationBell] Connecting...");
-      connect().then(() => {
-        console.log("[NotificationBell] Connected, isConnected:", isConnected);
-      }).catch((err) => {
-        console.log("[NotificationBell] Connect error:", err);
+      connect().catch(() => {
+        // Connection error handled silently
       });
     }
 

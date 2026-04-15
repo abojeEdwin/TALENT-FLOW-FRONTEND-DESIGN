@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { RoleGuard } from "@/components/shared/role-guard";
 import { EmptyState } from "@/components/shared/empty-state";
 import { fetchLearnerCourses, fetchCourseCoverImagePresignedUrl } from "@/lib/api/courses";
@@ -8,43 +9,46 @@ import { CourseResponse } from "@/lib/api/types";
 import { APIError } from "@/lib/api/client";
 import { toast } from "sonner";
 import Link from "next/link";
+import Image from "next/image";
 import { BookOpen, Clock, CheckCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function MyCoursesContent() {
   const [courses, setCourses] = useState<CourseResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+
+  const loadCourses = useCallback(async () => {
+    try {
+      const data = await fetchLearnerCourses();
+      
+      const coursesWithImages = await Promise.all(
+        data.map(async (course) => {
+          try {
+            const { presignedUrl } = await fetchCourseCoverImagePresignedUrl(course.id);
+            return { ...course, coverImageUrl: presignedUrl };
+          } catch {
+            return course;
+          }
+        })
+      );
+      
+      setCourses(coursesWithImages);
+    } catch (error) {
+      if (error instanceof APIError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to load your courses");
+      }
+      setCourses([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const loadCourses = async () => {
-      try {
-        const data = await fetchLearnerCourses();
-        
-        const coursesWithImages = await Promise.all(
-          data.map(async (course) => {
-            try {
-              const { presignedUrl } = await fetchCourseCoverImagePresignedUrl(course.id);
-              return { ...course, coverImageUrl: presignedUrl };
-            } catch (err) {
-              return course;
-            }
-          })
-        );
-        
-        setCourses(coursesWithImages);
-      } catch (error) {
-        if (error instanceof APIError) {
-          toast.error(error.message);
-        } else {
-          toast.error("Failed to load your courses");
-        }
-        setCourses([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     loadCourses();
-  }, []);
+  }, [loadCourses]);
 
   if (isLoading) {
     return (
@@ -66,7 +70,7 @@ function MyCoursesContent() {
           description="You haven&apos;t enrolled in any courses yet. Browse our catalog to start learning."
           action={{
             label: "Browse Courses",
-            onClick: () => window.location.href = "/dashboard/learner/courses",
+            onClick: () => router.push("/dashboard/learner/courses"),
           }}
         />
       </div>
@@ -84,9 +88,15 @@ function MyCoursesContent() {
         {courses.map((course) => (
           <Link key={course.id} href={`/dashboard/learner/courses/${course.id}`} className="block">
             <div className="rounded-lg border border-border bg-card overflow-hidden hover:border-primary/30 transition-colors h-full flex flex-col">
-              <div className="h-40 bg-secondary flex items-center justify-center relative flex-shrink-0">
+              <div className="h-40 bg-secondary flex items-center justify-center relative flex-shrink-0 overflow-hidden">
                 {course.coverImageUrl ? (
-                  <img src={course.coverImageUrl} alt={course.title} className="w-full h-full object-cover" />
+                  <Image 
+                    src={course.coverImageUrl} 
+                    alt={course.title} 
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
                 ) : (
                   <BookOpen className="w-12 h-12 text-muted-foreground" />
                 )}
@@ -111,7 +121,7 @@ function MyCoursesContent() {
       </div>
 
       <div className="text-center">
-        <Button variant="link" onClick={() => window.location.href = "/dashboard/learner/courses"}>
+        <Button variant="link" onClick={() => router.push("/dashboard/learner/courses")}>
           Browse more courses
         </Button>
       </div>

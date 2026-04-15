@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useCallback } from "react";
 import { RoleGuard } from "@/components/shared/role-guard";
 import { EmptyState } from "@/components/shared/empty-state";
-import { fetchCourseDetail, fetchLessonDetail, completeLesson } from "@/lib/api/courses";
+import { fetchCourseDetail, completeLesson } from "@/lib/api/courses";
+import { CourseDetailResponse, CourseModuleResponse } from "@/lib/api/types";
 import { APIError } from "@/lib/api/client";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -11,54 +12,65 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Play, BookOpen, Clock, CheckCircle, Circle, ChevronDown, ChevronRight, GraduationCap, FileText, Video as VideoIcon, FileAudio, ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+interface Lesson {
+  id: string;
+  title: string;
+  type: string;
+  contentUrl?: string;
+  contentText?: string;
+  position: number;
+  completed?: boolean;
+}
+
 function LessonViewerContent({ paramsPromise }: { paramsPromise: Promise<{ id: string }> }) {
   const params = use(paramsPromise);
   const courseId = params.id;
   const searchParams = useSearchParams();
   const initialLessonId = searchParams.get("lessonId");
   
-  const [course, setCourse] = useState<any>(null);
-  const [currentLesson, setCurrentLesson] = useState<any>(null);
+  const [course, setCourse] = useState<CourseDetailResponse | null>(null);
+  const [currentLesson, setCurrentLesson] = useState<(Lesson & { moduleTitle: string }) | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCompleting, setIsCompleting] = useState(false);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const router = useRouter();
 
-  useEffect(() => {
-    const loadCourse = async () => {
-      try {
-        const data = await fetchCourseDetail(courseId);
-        setCourse(data);
-        
-        if (data.modules?.length) {
-          const expanded = new Set(data.modules.map((m: any) => m.id));
-          setExpandedModules(expanded);
-        }
-        
-        if (initialLessonId) {
-          const lesson = findLesson(data, initialLessonId);
-          if (lesson) {
-            setCurrentLesson(lesson);
-          }
-        }
-      } catch (error) {
-        if (error instanceof APIError) {
-          toast.error(error.message);
-        } else {
-          toast.error("Failed to load course");
-        }
-      } finally {
-        setIsLoading(false);
+  const loadCourse = useCallback(async () => {
+    try {
+      const data = await fetchCourseDetail(courseId);
+      setCourse(data);
+      
+      if (data.modules?.length) {
+        const expanded = new Set(data.modules.map((m) => m.id));
+        setExpandedModules(expanded);
       }
-    };
-    loadCourse();
+      
+      if (initialLessonId) {
+        const lesson = findLesson(data, initialLessonId);
+        if (lesson) {
+          setCurrentLesson(lesson);
+        }
+      }
+    } catch (error) {
+      if (error instanceof APIError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to load course");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   }, [courseId, initialLessonId]);
 
-  const findLesson = (courseData: any, lessonId: string): any => {
-    for (const module of courseData.modules || []) {
-      for (const lesson of module.lessons || []) {
+  useEffect(() => {
+    loadCourse();
+  }, [loadCourse]);
+
+  const findLesson = (courseData: CourseDetailResponse | null, lessonId: string): (Lesson & { moduleTitle: string }) | null => {
+    if (!courseData?.modules) return null;
+    for (const module of courseData.modules) {
+      for (const lesson of module.lessons) {
         if (lesson.id === lessonId) {
-          console.log("Found lesson:", lesson);
           return { ...lesson, moduleTitle: module.title };
         }
       }
@@ -68,9 +80,6 @@ function LessonViewerContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
 
   const handleSelectLesson = (lessonId: string) => {
     const lesson = findLesson(course, lessonId);
-    console.log("Selected lesson:", lesson);
-    console.log("Content URL:", lesson?.contentUrl);
-    console.log("Lesson type:", lesson?.lessonType);
     if (lesson) {
       setCurrentLesson(lesson);
       router.push(`/dashboard/learner/courses/${courseId}/learn?lessonId=${lessonId}`, { scroll: false });
@@ -106,8 +115,9 @@ function LessonViewerContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
   };
 
   const findModuleTitle = (lessonId: string): string => {
-    for (const module of course.modules || []) {
-      for (const lesson of module.lessons || []) {
+    if (!course?.modules) return "";
+    for (const module of course.modules) {
+      for (const lesson of module.lessons) {
         if (lesson.id === lessonId) {
           return module.title;
         }
@@ -116,10 +126,11 @@ function LessonViewerContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
     return "";
   };
 
-  const getAllLessons = (): any[] => {
-    const lessons: any[] = [];
-    for (const module of course.modules || []) {
-      for (const lesson of module.lessons || []) {
+  const getAllLessons = (): (Lesson & { moduleTitle: string })[] => {
+    if (!course?.modules) return [];
+    const lessons: (Lesson & { moduleTitle: string })[] = [];
+    for (const module of course.modules) {
+      for (const lesson of module.lessons) {
         lessons.push({ ...lesson, moduleTitle: module.title });
       }
     }
@@ -246,7 +257,7 @@ function LessonViewerContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
         ) : (
           <>
             <div className="rounded-lg border border-border bg-card overflow-hidden">
-              {currentLesson.lessonType === 'VIDEO' && currentLesson.contentUrl ? (
+              {currentLesson.type === 'VIDEO' && currentLesson.contentUrl ? (
                 <div className="aspect-video bg-black">
                   <video 
                     src={currentLesson.contentUrl} 
@@ -254,7 +265,7 @@ function LessonViewerContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
                     className="w-full h-full"
                   />
                 </div>
-              ) : currentLesson.lessonType === 'PDF' && currentLesson.contentUrl ? (
+              ) : currentLesson.type === 'PDF' && currentLesson.contentUrl ? (
                 <div className="aspect-video bg-muted flex items-center justify-center">
                   <iframe 
                     src={currentLesson.contentUrl} 

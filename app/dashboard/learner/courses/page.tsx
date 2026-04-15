@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Search, Filter, BookOpen, Clock, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 
 function BrowseCoursesContent() {
   const [courses, setCourses] = useState<CourseResponse[]>([]);
@@ -130,9 +131,15 @@ function BrowseCoursesContent() {
           {filteredCourses.map((course) => (
             <Link key={course.id} href={`/dashboard/learner/courses/${course.id}`} className="block">
               <div className="rounded-lg border border-border bg-card overflow-hidden hover:border-primary/30 transition-colors h-full">
-                <div className="h-40 bg-secondary flex items-center justify-center relative">
+                <div className="h-40 bg-secondary flex items-center justify-center relative overflow-hidden">
                   {course.coverImageUrl ? (
-                    <img src={course.coverImageUrl} alt={course.title} className="w-full h-full object-cover" />
+                    <Image 
+                      src={course.coverImageUrl} 
+                      alt={course.title} 
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
                   ) : (
                     <BookOpen className="w-12 h-12 text-muted-foreground" />
                   )}

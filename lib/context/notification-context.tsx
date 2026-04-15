@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { Notification, NotificationType } from "@/lib/types";
 import { wsClient } from "@/lib/websocket-client";
 import { getAuthToken } from "@/lib/api/auth";
@@ -28,6 +28,10 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
+interface WebSocketMessage {
+  payload?: Record<string, unknown>;
+}
+
 function createNotificationFromPayload(
   payload: Record<string, unknown>,
   userId: string
@@ -41,23 +45,6 @@ function createNotificationFromPayload(
     payload: payload as Notification["payload"],
     createdAt: (payload.createdAt as string) || new Date().toISOString(),
     read: (payload.read as boolean) ?? false,
-  };
-}
-
-function transformNotification(apiNotification: any): Notification {
-  let createdAtStr = apiNotification.createdAt;
-  if (createdAtStr && typeof createdAtStr === "string") {
-    createdAtStr = createdAtStr.replace("T", " ").substring(0, 19);
-  }
-  return {
-    id: apiNotification.id || "",
-    userId: "",
-    type: apiNotification.type || "ASSIGNMENT_CREATED",
-    title: apiNotification.title || "",
-    message: apiNotification.message || "",
-    payload: apiNotification.payload,
-    createdAt: createdAtStr || new Date().toISOString(),
-    read: apiNotification.read || false,
   };
 }
 
@@ -99,61 +86,57 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     try {
       setIsLoading(true);
       const response = await getNotifications(0, 50);
-      const transformed = response.data.map(transformNotification);
-      setNotifications(transformed);
+      setNotifications(response.data);
       setUnreadCount(response.unreadCount);
     } catch {
-      console.log("[Notification] REST API unavailable");
+      // REST API unavailable, notifications will come via WebSocket
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const handleNotificationMessage = useCallback((message: any) => {
-    const payload = message?.payload || message;
+  const showToast = useCallback((notification: Notification) => {
+    const icon = NOTIFICATION_ICONS[notification.type] || "🔔";
+    toast.success(`${icon} ${notification.title}`, {
+      description: notification.message,
+      duration: 5000,
+    });
+  }, []);
+
+  const handleNotificationMessage = useCallback((message: WebSocketMessage) => {
+    const payload = message?.payload as Record<string, unknown> || message;
 
     if (payload && (payload.type || payload.title)) {
-      const uid = payload.userId || userIdRef.current || "current-user";
+      const uid = (payload.userId as string) || userIdRef.current || "current-user";
       const notification = createNotificationFromPayload(payload, uid);
 
       setNotifications((prev) => [notification, ...prev].slice(0, 50));
       setUnreadCount((prev) => prev + 1);
-
-      const icon = NOTIFICATION_ICONS[notification.type] || "🔔";
-      toast.success(`${icon} ${notification.title}`, {
-        description: notification.message,
-        duration: 5000,
-      });
+      showToast(notification);
     }
-  }, [unreadCount]);
+  }, [showToast]);
 
   const connect = useCallback(async () => {
     const token = getAuthToken();
     if (!token || isConnecting || isConnected) {
-      console.log("[Notification] Already connected or connecting, skipping");
       return;
     }
 
-    console.log("[Notification] Attempting to connect...");
     setIsConnecting(true);
     const currentUserId = user?.id || userIdRef.current || 'current';
 
     try {
       await fetchNotifications();
-      console.log("[Notification] Fetched historical notifications");
-    } catch (err) {
-      console.log("[Notification] REST failed:", err);
+    } catch {
+      // REST failed, rely on WebSocket
     }
 
     try {
       await wsClient.connect(token);
-      console.log("[Notification] WebSocket connected");
       setIsConnected(true);
       const topic = `/topic/notifications/${currentUserId}`;
       wsClient.subscribeToTopic(topic, handleNotificationMessage);
-      console.log("[Notification] Subscribed to", topic);
-    } catch (err) {
-      console.log("[Notification] WebSocket failed:", err);
+    } catch {
       setIsConnected(false);
     }
 
@@ -173,8 +156,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     try {
       await markNotificationAsRead(id);
-    } catch (error) {
-      console.error("[Notification] Failed to mark as read:", error);
+    } catch {
+      // Silently fail, UI already updated
     }
   }, []);
 
@@ -184,8 +167,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     try {
       await markAllNotificationsAsRead();
-    } catch (error) {
-      console.error("[Notification] Failed to mark all as read:", error);
+    } catch {
+      // Silently fail
     }
   }, []);
 
@@ -195,8 +178,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     try {
       await clearAllNotifications();
-    } catch (error) {
-      console.error("[Notification] Failed to clear notifications:", error);
+    } catch {
+      // Silently fail
     }
   }, []);
 
@@ -204,21 +187,32 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     await fetchNotifications();
   }, [fetchNotifications]);
 
+  const value = useMemo(() => ({
+    notifications,
+    unreadCount,
+    isConnected,
+    isLoading,
+    connect,
+    disconnect,
+    markAsRead,
+    markAllAsRead,
+    clearAll,
+    refresh,
+  }), [
+    notifications,
+    unreadCount,
+    isConnected,
+    isLoading,
+    connect,
+    disconnect,
+    markAsRead,
+    markAllAsRead,
+    clearAll,
+    refresh,
+  ]);
+
   return (
-    <NotificationContext.Provider
-      value={{
-        notifications,
-        unreadCount,
-        isConnected,
-        isLoading,
-        connect,
-        disconnect,
-        markAsRead,
-        markAllAsRead,
-        clearAll,
-        refresh,
-      }}
-    >
+    <NotificationContext.Provider value={value}>
       {children}
     </NotificationContext.Provider>
   );

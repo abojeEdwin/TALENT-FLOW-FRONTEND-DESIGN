@@ -61,8 +61,7 @@ export async function getNotifications(
       limit: data.size,
       unreadCount: data.content.filter((n) => !n.read).length,
     };
-  } catch (error: any) {
-    console.log("[Notifications] REST failed, returning empty:", error?.message);
+  } catch {
     return {
       data: [],
       total: 0,
