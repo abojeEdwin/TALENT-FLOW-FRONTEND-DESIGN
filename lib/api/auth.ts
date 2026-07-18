@@ -13,6 +13,14 @@ export async function loginUser(
   password: string
 ): Promise<LoginResponse> {
   const request: LoginRequest = { email, password };
+  
+  // Debug logging
+  console.log('[DEBUG] loginUser called with:', {
+    email,
+    passwordLength: password?.length,
+    request
+  });
+  
   return fetchAPI<LoginResponse>("/auth/login", {
     method: "POST",
     body: JSON.stringify(request),

@@ -28,6 +28,15 @@ export function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
+    
+    // Debug logging
+    console.log('[DEBUG] Form submitted with data:', {
+      email: data.email,
+      passwordLength: data.password?.length,
+      emailTrimmed: data.email?.trim(),
+      passwordTrimmed: data.password?.trim(),
+    });
+    
     try {
       const response = await loginUser(data.email, data.password);
       setAuthToken(response.accessToken);
@@ -39,7 +48,7 @@ export function LoginForm() {
         if (error.status === 404) {
           toast.error("Unable to connect to server. Please try again later.");
         } else if (error.status === 401) {
-          toast.error("Invalid email or password");
+          toast.error("Invalid credentials");
         } else if (error.status >= 500) {
           toast.error("Server error. Please try again later.");
         } else if (error.data.errors) {

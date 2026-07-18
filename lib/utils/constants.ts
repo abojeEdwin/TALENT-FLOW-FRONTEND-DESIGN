@@ -57,6 +57,7 @@ export const LEARNER_MENU_ITEMS = [
 ];
 
 export const SHARED_MENU_ITEMS = [
+  { label: "Messages", href: "/dashboard/chat" },
   { label: "Profile Settings", href: "/dashboard/profile" },
 ];
 

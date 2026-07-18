@@ -219,7 +219,8 @@ export type NotificationType =
   | 'COURSE_INSTRUCTORS_ASSIGNED'
   | 'COURSE_INSTRUCTORS_UNASSIGNED'
   | 'UPLOAD_STATUS'
-  | 'UPLOAD_FAILED_ESCALATION';
+  | 'UPLOAD_FAILED_ESCALATION'
+  | 'CHAT_MESSAGE_RECEIVED';
 
 export interface NotificationPayload {
   courseId?: string;
@@ -249,6 +250,12 @@ export interface NotificationPayload {
   filename?: string;
   error?: string;
   initiatedByUserId?: string;
+  conversationId?: string;
+  messageId?: string;
+  senderId?: string;
+  senderName?: string;
+  chatType?: "DIRECT" | "FREE_GROUP" | "COHORT_CHAT" | "TEAM_CHAT";
+  preview?: string;
 }
 
 export interface Notification {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { Notification, NotificationType } from "@/lib/types";
 import { useNotifications } from "@/lib/context/notification-context";
@@ -46,14 +47,15 @@ const NOTIFICATION_CONFIG: Record<NotificationType, { icon: React.ReactNode; col
   COURSE_INSTRUCTORS_UNASSIGNED: { icon: <Users className="w-4 h-4" />, color: "text-orange-500" },
   UPLOAD_STATUS: { icon: <Upload className="w-4 h-4" />, color: "text-blue-500" },
   UPLOAD_FAILED_ESCALATION: { icon: <AlertTriangle className="w-4 h-4" />, color: "text-red-500" },
+  CHAT_MESSAGE_RECEIVED: { icon: <MessageSquare className="w-4 h-4" />, color: "text-blue-500" },
 };
 
 interface NotificationItemProps {
   notification: Notification;
-  onMarkAsRead: (id: string) => void;
+  onClick: (notification: Notification) => void;
 }
 
-function NotificationItem({ notification, onMarkAsRead }: NotificationItemProps) {
+function NotificationItem({ notification, onClick }: NotificationItemProps) {
   const config = NOTIFICATION_CONFIG[notification.type] || {
     icon: <Circle className="w-4 h-4" />,
     color: "text-muted-foreground",
@@ -72,7 +74,7 @@ function NotificationItem({ notification, onMarkAsRead }: NotificationItemProps)
       className={`flex gap-3 p-3 rounded-lg cursor-pointer transition-colors hover:bg-secondary/50 ${
         !notification.read ? "bg-secondary/30" : ""
       }`}
-      onClick={() => onMarkAsRead(notification.id)}
+      onClick={() => onClick(notification)}
     >
       <div className={`flex-shrink-0 mt-1 ${config.color}`}>{config.icon}</div>
       <div className="flex-1 min-w-0">
@@ -98,14 +100,22 @@ interface NotificationPanelProps {
 }
 
 export function NotificationPanel({ onClose }: NotificationPanelProps) {
+  const router = useRouter();
   const {
     notifications,
     unreadCount,
-    markAsRead,
+    onNotificationClick,
     markAllAsRead,
     clearAll,
     isConnected,
   } = useNotifications();
+
+  const handleNotificationClick = (notification: Notification) => {
+    onNotificationClick(notification);
+    if (onClose) {
+      onClose();
+    }
+  };
 
   return (
     <div className="w-80 md:w-96">
@@ -167,7 +177,7 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
                 <NotificationItem
                   key={notification.id}
                   notification={notification}
-                  onMarkAsRead={markAsRead}
+                  onClick={handleNotificationClick}
                 />
               ))}
             </div>

@@ -52,7 +52,13 @@ export async function getNotifications(
 }> {
   try {
     const data = await fetchAPI<NotificationsPageResponse>(
-      `/notifications/`
+      `/notifications/`,
+      {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        }
+      }
     );
     return {
       data: data.content.map(transformNotification),
@@ -98,9 +104,34 @@ export async function markNotificationAsRead(id: string): Promise<void> {
 }
 
 export async function markAllNotificationsAsRead(): Promise<void> {
-  return fetchAPI<void>("/notifications/read-all", {
-    method: "PATCH",
-  });
+  // Try the primary endpoint first
+  try {
+    return await fetchAPI<void>("/notifications/read-all", {
+      method: "PATCH",
+    });
+  } catch (error) {
+    console.error("Primary endpoint /notifications/read-all failed, trying alternative:", error);
+    
+    // Try alternative endpoint patterns that backends commonly use
+    try {
+      return await fetchAPI<void>("/notifications/mark-all-read", {
+        method: "PATCH",
+      });
+    } catch (altError1) {
+      console.error("Alternative endpoint /notifications/mark-all-read failed:", altError1);
+      
+      try {
+        return await fetchAPI<void>("/notifications/read-all", {
+          method: "PUT",
+        });
+      } catch (altError2) {
+        console.error("Alternative method PUT /notifications/read-all failed:", altError2);
+        
+        // If all alternatives fail, throw the original error
+        throw error;
+      }
+    }
+  }
 }
 
 export async function deleteNotification(id: string): Promise<void> {

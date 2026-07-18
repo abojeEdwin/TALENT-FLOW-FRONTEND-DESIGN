@@ -58,6 +58,16 @@ async function fetchAPI<T>(
 
   const url = `${API_BASE_URL}/${API_VERSION}${endpoint}`;
 
+  // Debug logging for login requests
+  if (endpoint === '/auth/login' && fetchOptions.method === 'POST') {
+    console.log('[DEBUG] Login Request:', {
+      url,
+      body: fetchOptions.body,
+      headers,
+      skipAuth
+    });
+  }
+
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -67,6 +77,7 @@ async function fetchAPI<T>(
       headers,
       credentials: "include",
       signal: controller.signal,
+      cache: "no-store", // Disable Next.js caching for API calls
     });
     clearTimeout(timeoutId);
 
@@ -100,6 +111,15 @@ async function fetchAPI<T>(
       } else if (typeof data === 'string') {
         errorMessage = data;
       }
+      
+      // Log detailed error information for debugging
+      console.error(`[API Error] ${fetchOptions.method || 'GET'} ${endpoint}:`, {
+        status: response.status,
+        statusText: response.statusText,
+        errorMessage,
+        data
+      });
+      
       throw new APIError(response.status, { message: errorMessage } as ErrorResponse);
     }
 

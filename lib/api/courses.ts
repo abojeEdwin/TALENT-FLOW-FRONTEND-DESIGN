@@ -84,7 +84,8 @@ export async function fetchLessonDetail(lessonId: string): Promise<LessonDetailR
 
 // Instructor endpoints
 export async function fetchInstructorCourses(): Promise<CourseResponse[]> {
-  return fetchAPI<CourseResponse[]>("/instructor/my-courses");
+  const response = await fetchAPI<CourseListResponse>("/instructor/my-courses");
+  return response.content || [];
 }
 
 export async function fetchInstructorCoursesWithCoverImages(): Promise<CourseResponse[]> {
