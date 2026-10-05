@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { RoleGuard } from "@/components/shared/role-guard";
 import { EmptyState } from "@/components/shared/empty-state";
 import { fetchLearnerCourses, fetchCourseCoverImagePresignedUrl } from "@/lib/api/courses";
-import { CourseResponse } from "@/lib/api/types";
+import { CourseResponse,
+  RoleName,
+} from "@/lib/api/types";
 import { APIError } from "@/lib/api/client";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -25,7 +27,7 @@ function MyCoursesContent() {
       const coursesWithImages = await Promise.all(
         data.map(async (course) => {
           try {
-            const { presignedUrl } = await fetchCourseCoverImagePresignedUrl(course.id);
+            const presignedUrl = await fetchCourseCoverImagePresignedUrl(course.id);
             return { ...course, coverImageUrl: presignedUrl };
           } catch {
             return course;
@@ -131,7 +133,7 @@ function MyCoursesContent() {
 
 export default function MyCoursesPage() {
   return (
-    <RoleGuard roles={["INTERN"]}>
+    <RoleGuard roles={[RoleName.INTERN]}>
       <MyCoursesContent />
     </RoleGuard>
   );

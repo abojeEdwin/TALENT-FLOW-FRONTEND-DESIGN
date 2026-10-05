@@ -1,9 +1,15 @@
-// API Response/Request Types
+// API DTOs - mirrors the Spring records in com.talentFlow.*.web.dto
 
 export enum RoleName {
-  ADMIN = "ADMIN",
+  ORG_ADMIN = "ORG_ADMIN",   // Organisation admin — created on /auth/register
   INSTRUCTOR = "INSTRUCTOR",
-  INTERN = "INTERN",
+  INTERN = "INTERN",         // Learner role — named INTERN in the backend
+}
+
+export enum UserStatus {
+  ACTIVE = "ACTIVE",
+  LOCKED = "LOCKED",
+  DISABLED = "DISABLED",
 }
 
 export enum CourseStatus {
@@ -18,49 +24,82 @@ export enum LessonType {
   TEXT = "TEXT",
 }
 
-export enum UserStatus {
-  ACTIVE = "ACTIVE",
-  LOCKED = "LOCKED",
-  DISABLED = "DISABLED",
-  INACTIVE = "INACTIVE",
+export enum MaterialType {
+  DOCUMENT = "DOCUMENT",
+  VIDEO = "VIDEO",
+  LINK = "LINK",
 }
 
-export enum ProgramStatus {
-  ACTIVE = "ACTIVE",
-  ARCHIVED = "ARCHIVED",
+export enum EnrollmentStatus {
+  ENROLLED = "ENROLLED",
+  COMPLETED = "COMPLETED",
+  REVOKED = "REVOKED",
 }
 
-export enum TeamStatus {
-  ACTIVE = "ACTIVE",
-  INACTIVE = "INACTIVE",
-  SUSPENDED = "SUSPENDED",
+export enum SubmissionStatus {
+  SUBMITTED = "SUBMITTED",
+  GRADED = "GRADED",
+}
+
+export enum ChatType {
+  DIRECT = "DIRECT",
+  FREE_GROUP = "FREE_GROUP",
+  COHORT_CHAT = "COHORT_CHAT",
+  TEAM_CHAT = "TEAM_CHAT",
+}
+
+export enum ParticipantRole {
+  OWNER = "OWNER",
+  ADMIN = "ADMIN",
+  MEMBER = "MEMBER",
+}
+
+/** Spring Data `Page<T>` serialised as-is by the backend. */
+export interface Page<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
 }
 
 // Auth DTOs
+
 export interface LoginRequest {
   email: string;
   password: string;
 }
 
+/** POST /api/v1/auth/register - creates the organisation + its first ORG_ADMIN */
 export interface RegisterRequest {
+  organizationName: string;
   firstName: string;
   lastName: string;
   email: string;
   password: string;
 }
 
-export interface ResetPasswordRequest {
-  password: string;
-  confirmPassword: string;
+export interface RegisterResponse {
+  organizationId: string;
+  userId: string;
+  email: string;
+  accessToken: string;
+  tokenType: string;
+  expiresInSeconds: number;
+  message: string;
 }
 
 export interface AuthResponse {
   id: string;
+  organizationId: string | null;
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
-  status: string;
+  role: RoleName;
+  status: UserStatus;
 }
 
 export interface LoginResponse {
@@ -70,20 +109,32 @@ export interface LoginResponse {
   user: AuthResponse;
 }
 
-export interface RegisterResponse {
-  id: string;
-  email: string;
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
+export interface ApiMessageResponse {
   message: string;
 }
 
-// User DTOs
-export interface UserResponse {
+// Admin user DTOs
+
+/** AdminUserSummaryResponse */
+export interface AdminUserSummaryResponse {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  role: RoleName;
   status: UserStatus;
+  role: RoleName;
+  lastLoginAt: string | null;
+}
+
+/** AdminUserDetailResponse */
+export interface AdminUserDetailResponse extends AdminUserSummaryResponse {
+  failedLoginAttempts: number;
+  lockedUntil: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -92,113 +143,125 @@ export interface UpdateUserStatusRequest {
   status: UserStatus;
 }
 
+/** Backend takes a single role, not an array. */
 export interface UpdateUserRolesRequest {
   role: RoleName;
 }
 
-export interface UserListResponse {
-  content: UserResponse[];
-  totalElements: number;
-  totalPages: number;
-  currentPage: number;
-  pageSize: number;
+export interface CreateInstructorRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
 }
 
-// Instructor DTOs
-export interface InstructorOnboardingRequest {
-  bio?: string;
-  expertise?: string;
-  hourlyRate?: number;
+export interface CreateLearnerRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
 }
 
-// Program DTOs
+/** OnboardInstructorResponse / OnboardLearnerResponse */
+export interface OnboardUserResponse {
+  userId: string;
+  email: string;
+  message: string;
+}
+
+// Program (cohort / team) DTOs
+
+/** CohortResponse */
 export interface CohortResponse {
   id: string;
   name: string;
-  program: string;
-  status: ProgramStatus;
+  description: string | null;
+  intakeYear: number;
   startDate: string;
   endDate: string;
-  createdAt: string;
-  updatedAt: string;
+  isActive: boolean;
 }
 
-export interface TeamResponse {
-  id: string;
+export interface CreateCohortRequest {
   name: string;
-  cohort: string;
-  status: TeamStatus;
-  memberCount: number;
-  createdAt: string;
-  updatedAt: string;
+  description?: string;
+  intakeYear: number;
+  startDate: string;
+  endDate: string;
 }
 
-export interface TeamMemberResponse {
+/** ProjectTeamResponse */
+export interface ProjectTeamResponse {
   id: string;
-  user: UserResponse;
-  team: string;
-  joinedAt: string;
+  cohortId: string;
+  name: string;
+  description: string | null;
 }
 
-export interface AllocateTeamMemberRequest {
+export interface CreateProjectTeamRequest {
+  cohortId: string;
+  name: string;
+  description?: string;
+}
+
+/** TeamMemberResponse */
+export interface TeamMemberResponse {
   userId: string;
+  email: string;
+  fullName: string;
+  teamRole: string;
+}
+
+export interface AllocateUserToTeamRequest {
+  userId: string;
+  teamRole: string;
+}
+
+/** AutoAllocateTeamMembersResponse */
+export interface AutoAllocateTeamMembersResponse {
   teamId: string;
+  allocatedCount: number;
+  maxTeamSize: number;
+  members: TeamMemberResponse[];
 }
 
 // Course DTOs
+
+/** CourseResponse */
 export interface CourseResponse {
   id: string;
   title: string;
-  description: string;
-  instructor?: UserResponse;
-  status: string;
-  coverImageUrl?: string;
-  introVideoUrl?: string;
-  publishedAt?: string;
-  archivedAt?: string;
-  createdByUserId?: string;
-  instructorIds?: string[];
-  level?: string;
-  duration?: number;
-  tags?: string[];
-  createdAt?: string;
-  updatedAt?: string;
+  description: string | null;
+  coverImageUrl: string | null;
+  introVideoUrl: string | null;
+  status: CourseStatus;
+  publishedAt: string | null;
+  archivedAt: string | null;
+  createdByUserId: string;
+  instructorIds: string[];
 }
 
-export interface CourseListResponse {
-  content: CourseResponse[];
-  totalElements: number;
-  totalPages: number;
-  currentPage: number;
-  pageSize: number;
-}
-
-export interface CreateCourseRequest {
-  title: string;
-  description: string;
-}
-
-export interface UpdateCourseRequest {
-  title?: string;
-  description?: string;
-  level?: string;
-  tags?: string[];
-  duration?: number;
-  status?: CourseStatus;
-}
-
-// Course Module DTOs
+/** CourseDetailResponse */
 export interface CourseDetailResponse {
   id: string;
   title: string;
-  description: string;
-  coverImageUrl?: string;
-  introVideoUrl?: string;
-  status: string;
+  description: string | null;
+  coverImageUrl: string | null;
+  introVideoUrl: string | null;
+  status: CourseStatus;
   progressPct: number;
   modules: CourseModuleResponse[];
 }
 
+export interface CreateCourseRequest {
+  title: string;
+  description?: string;
+}
+
+export interface AssignInstructorsRequest {
+  primaryInstructorId: string;
+  coInstructorIds?: string[];
+}
+
+/** CourseModuleResponse - has no `description` field on the backend. */
 export interface CourseModuleResponse {
   id: string;
   title: string;
@@ -208,121 +271,233 @@ export interface CourseModuleResponse {
 
 export interface CreateCourseModuleRequest {
   title: string;
-  description?: string;
-  position?: number;
+  position: number;
+}
+
+export interface CourseMaterialResponse {
+  id: string;
+  courseId: string;
+  title: string;
+  materialType: MaterialType;
+  contentUrl: string;
+  uploadStatus: string;
+  uploadedByUserId: string;
+}
+
+// Lesson DTOs
+
+/** LessonResponse - the type discriminator is `lessonType`, not `type`. */
+export interface LessonResponse {
+  id: string;
+  title: string;
+  lessonType: LessonType;
+  position: number;
+  contentUrl: string | null;
+  contentText: string | null;
+  completed: boolean;
 }
 
 export interface CreateLessonRequest {
   title: string;
-  type: LessonType;
-  content?: string;
-  position?: number;
-}
-
-// Lesson DTOs
-export interface LessonResponse {
-  id: string;
-  title: string;
-  type: LessonType;
+  lessonType: LessonType;
+  position: number;
   contentUrl?: string;
   contentText?: string;
-  position: number;
-  completed?: boolean;
 }
 
-export interface CompleteLessonRequest {
-  timeSpent: number;
-}
-
-export interface LessonProgressResponse {
+/**
+ * Frontend-only view model. The backend exposes no "list submissions for an
+ * assignment" endpoint, so this shape is never populated from the API today.
+ */
+export interface AssignmentSubmissionResponse {
   id: string;
-  lesson: string;
-  user: string;
-  progress: number;
-  completed: boolean;
-  lastAccessedAt: string;
+  assignmentId: string;
+  learnerId: string;
+  learnerName: string;
+  learnerEmail: string;
+  submissionText: string | null;
+  submissionFileUrl: string | null;
+  submittedAt: string;
+  grade: number | null;
+  feedback: string | null;
+  gradedAt: string | null;
 }
 
-// Material DTOs
-export interface MaterialResponse {
-  id: string;
-  title: string;
-  course: string;
-  fileUrl: string;
-  fileType: string;
-  size: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface UploadMaterialRequest {
-  title: string;
-  course: string;
+/** LessonCompletionResponse */
+export interface LessonCompletionResponse {
+  lessonId: string;
+  courseId: string;
+  progressPct: number;
+  enrollmentStatus: EnrollmentStatus;
+  certificateQueued: boolean;
 }
 
 // Assignment DTOs
+
+/** AssignmentResponse */
 export interface AssignmentResponse {
   id: string;
+  courseId: string;
   title: string;
-  description: string;
-  course: string;
-  dueDate: string;
-  createdAt: string;
-  updatedAt: string;
+  instructions: string | null;
+  dueAt: string | null;
+  maxScore: number;
+  createdByUserId: string;
 }
 
 export interface CreateAssignmentRequest {
   title: string;
-  description: string;
-  course: string;
-  dueDate: string;
+  instructions?: string;
+  dueAt?: string;
+  maxScore?: number;
 }
 
-export interface AssignmentSubmissionResponse {
+/** ProvideFeedbackRequest - `comment` + `score`, not `feedback` + `grade`. */
+export interface ProvideFeedbackRequest {
+  comment: string;
+  score?: number;
+}
+
+/** AssignmentFeedbackResponse */
+export interface AssignmentFeedbackResponse {
   id: string;
-  assignment: string;
-  user: string;
-  submittedAt: string;
-  fileUrl: string;
-  feedback?: string;
-  grade?: number;
+  submissionId: string;
+  instructorUserId: string;
+  comment: string;
 }
 
-// Progress DTOs
-export interface ProgressResponse {
+/** InstructorProgressResponse - one row per learner per course. */
+export interface InstructorProgressResponse {
+  courseId: string;
+  courseTitle: string;
+  learnerId: string;
+  learnerEmail: string;
+  learnerName: string;
+  enrollmentStatus: EnrollmentStatus;
+  progressPct: number;
+  totalAssignments: number;
+  submittedAssignments: number;
+  averageScore: number;
+}
+
+/** LearnerProgressResponse - aggregated across a learner's courses. */
+export interface LearnerProgressResponse {
+  learnerId: string;
+  learnerEmail: string;
+  learnerName: string;
+  totalAssignments: number;
+  submittedAssignments: number;
+  averageScore: number;
+}
+
+// Notification DTOs
+
+/** NotificationResponse */
+export interface NotificationResponse {
   id: string;
-  user: string;
-  course: string;
-  progress: number;
-  completed: boolean;
-  lastAccessedAt: string;
+  type: string;
+  title: string;
+  message: string;
+  payload: Record<string, unknown> | null;
+  read: boolean;
+  readAt: string | null;
+  createdAt: string;
 }
 
-export interface ProgressStreamMessage {
+/** Websocket push payload: UserNotificationMessage */
+export interface UserNotificationMessage {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+  payload: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+/** Websocket push payload: CourseProgressUpdateMessage */
+export interface CourseProgressUpdateMessage {
   userId: string;
   courseId: string;
-  lessonId: string;
-  progress: number;
-  timestamp: string;
+  progressPct: number;
+  enrollmentStatus: EnrollmentStatus;
 }
 
-// Enrollment DTOs
-export interface EnrollmentResponse {
+// Chat DTOs
+
+export interface SearchUserResponse {
   id: string;
-  user: string;
-  course: string;
-  enrolledAt: string;
-  progress: number;
-  completed: boolean;
+  firstName: string;
+  lastName: string;
+  email: string;
 }
 
-// Instructor Assignment
-export interface AssignInstructorsRequest {
-  primaryInstructorId: string;
-  coInstructorIds?: string[];
+export interface ConversationParticipantResponse {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: ParticipantRole;
+  joinedAt: string;
 }
 
-// Error Response
+export interface ConversationResponse {
+  id: string;
+  type: ChatType;
+  name: string | null;
+  cohortId: string | null;
+  cohortName: string | null;
+  teamId: string | null;
+  teamName: string | null;
+  participants: ConversationParticipantResponse[];
+  createdAt: string;
+  updatedAt: string;
+  unreadCount: number | null;
+}
+
+export interface CreateConversationRequest {
+  type: ChatType;
+  name?: string;
+  cohortId?: string;
+  teamId?: string;
+}
+
+export interface MessageSenderResponse {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface MessageResponse {
+  id: string;
+  content: string;
+  sender: MessageSenderResponse;
+  replyToMessageId: string | null;
+  replyToContent: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface SendMessageRequest {
+  content: string;
+  replyToMessageId?: string;
+}
+
+export interface AddParticipantRequest {
+  userIds: string[];
+}
+
+export interface ReadReceiptResponse {
+  receipts: {
+    messageId: string;
+    userId: string;
+    firstName: string;
+    lastName: string;
+    readAt: string;
+  }[];
+}
+
+// Error response - GlobalExceptionHandler
 export interface ErrorResponse {
   timestamp: string;
   status: number;

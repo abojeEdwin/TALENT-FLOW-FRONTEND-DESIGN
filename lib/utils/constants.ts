@@ -1,7 +1,7 @@
 import { RoleName, UserStatus, CourseStatus, LessonType } from "@/lib/api/types";
 
-export const ROLE_DISPLAY_NAMES: Record<RoleName, string> = {
-  [RoleName.ADMIN]: "Administrator",
+export const ROLE_DISPLAY_NAMES: Record<string, string> = {
+  [RoleName.ORG_ADMIN]: "Organisation Admin",
   [RoleName.INSTRUCTOR]: "Instructor",
   [RoleName.INTERN]: "Learner",
 };
@@ -10,7 +10,6 @@ export const USER_STATUS_COLORS: Record<UserStatus, string> = {
   [UserStatus.ACTIVE]: "bg-green-100 text-green-800",
   [UserStatus.LOCKED]: "bg-red-100 text-red-800",
   [UserStatus.DISABLED]: "bg-gray-100 text-gray-800",
-  [UserStatus.INACTIVE]: "bg-gray-100 text-gray-800",
 };
 
 export const COURSE_STATUS_COLORS: Record<CourseStatus, string> = {
@@ -26,14 +25,14 @@ export const LESSON_TYPE_ICONS: Record<LessonType, string> = {
 };
 
 export const PERMISSIONS = {
-  USER_MANAGE: ["ADMIN"],
-  COURSE_MANAGE: ["ADMIN", "MENTOR"],
-  PROGRAM_MANAGE: ["ADMIN"],
-  REPORT_VIEW: ["ADMIN"],
-  INSTRUCTOR_ONBOARD: ["ADMIN"],
-  TEAM_MANAGE: ["ADMIN"],
-  COURSE_CREATE: ["MENTOR"],
-  COURSE_ENROLL: ["INTERN"],
+  USER_MANAGE: [RoleName.ORG_ADMIN, RoleName.SUPER_ADMIN],
+  COURSE_MANAGE: [RoleName.ORG_ADMIN, RoleName.SUPER_ADMIN, RoleName.INSTRUCTOR],
+  PROGRAM_MANAGE: [RoleName.ORG_ADMIN, RoleName.SUPER_ADMIN],
+  REPORT_VIEW: [RoleName.ORG_ADMIN, RoleName.SUPER_ADMIN, RoleName.INSTRUCTOR],
+  INSTRUCTOR_ONBOARD: [RoleName.ORG_ADMIN, RoleName.SUPER_ADMIN, RoleName.INSTRUCTOR],
+  TEAM_MANAGE: [RoleName.ORG_ADMIN, RoleName.SUPER_ADMIN],
+  COURSE_CREATE: [RoleName.ORG_ADMIN, RoleName.SUPER_ADMIN, RoleName.INSTRUCTOR],
+  COURSE_ENROLL: [RoleName.LEARNER],
 } as const;
 
 export const ADMIN_MENU_ITEMS = [

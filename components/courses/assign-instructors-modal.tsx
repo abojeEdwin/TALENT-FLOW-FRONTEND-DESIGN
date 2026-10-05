@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { UserResponse, CourseResponse } from "@/lib/api/types";
-import { fetchInstructors, fetchUsers } from "@/lib/api/users";
+import { CourseResponse, AdminUserSummaryResponse } from "@/lib/api/types";
+import { listInstructors } from "@/lib/api/admin";
 import { assignInstructors } from "@/lib/api/courses";
 import { APIError } from "@/lib/api/client";
 
@@ -32,7 +32,7 @@ export function AssignInstructorsModal({
   course,
   onSuccess,
 }: AssignInstructorsModalProps) {
-  const [instructors, setInstructors] = useState<UserResponse[]>([]);
+  const [instructors, setInstructors] = useState<AdminUserSummaryResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedPrimary, setSelectedPrimary] = useState<string>("");
@@ -45,8 +45,8 @@ export function AssignInstructorsModal({
         setSelectedInstructors(new Set(course.instructorIds));
         setSelectedPrimary(course.instructorIds[0] || "");
       }
-      if (course.instructor?.id) {
-        setSelectedPrimary(course.instructor.id);
+      if (course.instructorIds?.length) {
+        setSelectedPrimary(course.instructorIds[0]);
       }
     }
   }, [open]);
@@ -54,8 +54,8 @@ export function AssignInstructorsModal({
   const loadInstructors = async () => {
     setIsLoading(true);
     try {
-      const data = await fetchInstructors();
-      setInstructors(data);
+      const page = await listInstructors({ size: 100 });
+      setInstructors(page.content ?? []);
     } catch (error) {
       console.error("Failed to load instructors:", error);
       toast.error("Failed to load instructors");

@@ -172,7 +172,7 @@ export default function AdminDashboard() {
           <Card>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[640px]">
                   <thead className="border-b bg-muted/50">
                     <tr>
                       <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>

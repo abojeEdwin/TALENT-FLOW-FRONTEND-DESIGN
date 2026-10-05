@@ -13,11 +13,11 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import * as assignmentApi from "@/lib/api/assignments";
 import * as courseApi from "@/lib/api/courses";
-import { LearnerProgressResponse } from "@/lib/api/assignments";
+import { InstructorProgressResponse } from "@/lib/api/types";
 import { CourseResponse } from "@/lib/api/types";
 
 export default function ProgressPage() {
-  const [learners, setLearners] = useState<LearnerProgressResponse[]>([]);
+  const [learners, setLearners] = useState<InstructorProgressResponse[]>([]);
   const [courses, setCourses] = useState<CourseResponse[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
@@ -45,7 +45,7 @@ export default function ProgressPage() {
     try {
       setIsLoading(true);
       const courseId = selectedCourse === "all" ? undefined : selectedCourse;
-      const response = await assignmentApi.monitorLearnerProgress(courseId, 0, 100);
+      const response = await assignmentApi.getInstructorProgress({ courseId, page: 0, size: 100 });
       setLearners(response.content);
     } catch (error: any) {
       console.error("Failed to fetch learner progress:", error);
@@ -67,17 +67,17 @@ export default function ProgressPage() {
   };
 
   const averageProgress = learners.length > 0
-    ? learners.reduce((sum, l) => sum + l.progress, 0) / learners.length
+    ? learners.reduce((sum, l) => sum + l.progressPct, 0) / learners.length
     : 0;
 
-  const averageGrade = learners.filter(l => l.averageGrade !== undefined).length > 0
+  const averageGrade = learners.filter(l => l.averageScore != null).length > 0
     ? learners
-        .filter(l => l.averageGrade !== undefined)
-        .reduce((sum, l) => sum + (l.averageGrade || 0), 0) /
-      learners.filter(l => l.averageGrade !== undefined).length
+        .filter(l => l.averageScore != null)
+        .reduce((sum, l) => sum + (l.averageScore ?? 0), 0) /
+      learners.filter(l => l.averageScore != null).length
     : 0;
 
-  const totalAssignmentsSubmitted = learners.reduce((sum, l) => sum + l.assignmentsSubmitted, 0);
+  const totalAssignmentsSubmitted = learners.reduce((sum, l) => sum + l.submittedAssignments, 0);
   const totalAssignments = learners.reduce((sum, l) => sum + l.totalAssignments, 0);
 
   if (isLoading) {
@@ -99,7 +99,7 @@ export default function ProgressPage() {
   return (
     <RoleGuard roles={["INSTRUCTOR"]}>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold">Learner Progress</h1>
             <p className="mt-2 text-muted-foreground">
@@ -107,7 +107,7 @@ export default function ProgressPage() {
             </p>
           </div>
           <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-            <SelectTrigger className="w-64">
+            <SelectTrigger className="w-full sm:w-64">
               <SelectValue placeholder="Filter by course" />
             </SelectTrigger>
             <SelectContent>
@@ -190,20 +190,20 @@ export default function ProgressPage() {
               <div className="space-y-4">
                 {learners.map((learner, index) => (
                   <div
-                    key={learner.userId ?? index}
+                    key={learner.learnerId}
                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-center gap-4 flex-1">
                       <Avatar>
                         <AvatarFallback>
-                          {learner.userName?.charAt(0).toUpperCase() ?? ""}
+                          {learner.learnerName?.charAt(0).toUpperCase() ?? ""}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <p className="font-medium">{learner.userName}</p>
+                          <p className="font-medium">{learner.learnerName}</p>
                           <Badge variant="outline" className="text-xs">
-                            {learner.email}
+                            {learner.learnerEmail}
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
@@ -211,30 +211,29 @@ export default function ProgressPage() {
                         </p>
                         <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                           <span>
-                            Lessons: {learner.completedLessons}/{learner.totalLessons}
                           </span>
                           <span>
-                            Assignments: {learner.assignmentsSubmitted}/{learner.totalAssignments}
+                            Assignments: {learner.submittedAssignments}/{learner.totalAssignments}
                           </span>
                           <span>
-                            Last active: {learner.lastAccessedAt ? format(new Date(learner.lastAccessedAt), "MMM d, yyyy") : "N/A"}
+                            Enrolled: {learner.enrollmentStatus}
                           </span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      {learner.averageGrade !== undefined && (
+                      {learner.averageScore != null && (
                         <div className="text-right">
                           <p className="text-sm text-muted-foreground">Avg Grade</p>
-                          <p className="text-lg font-bold">{learner.averageGrade != null ? `${learner.averageGrade.toFixed(1)}%` : "N/A"}</p>
+                          <p className="text-lg font-bold">{learner.averageScore != null ? learner.averageScore.toFixed(1) : "N/A"}</p>
                         </div>
                       )}
                       <div className="w-32">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-sm text-muted-foreground">Progress</span>
-                          <span className="text-sm font-medium">{learner.progress?.toFixed(0) ?? "0"}%</span>
+                          <span className="text-sm font-medium">{learner.progressPct?.toFixed(0) ?? "0"}%</span>
                         </div>
-                        <Progress value={learner.progress} />
+                        <Progress value={learner.progressPct} />
                       </div>
                     </div>
                   </div>

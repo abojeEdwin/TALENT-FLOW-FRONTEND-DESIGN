@@ -37,7 +37,7 @@ export interface ConversationResponse {
   participants: ParticipantResponse[];
   createdAt: string;
   updatedAt: string;
-  unreadCount: number;
+  unreadCount: number | null;
 }
 
 export interface MessageResponse {
@@ -78,14 +78,15 @@ export interface AddParticipantRequest {
   userIds: string[];
 }
 
-// Spring Page response shape
+// Spring Data Page<T> serialised as-is by the backend.
+// NOTE: the page index is `number` and the size is `size` - there is no
+// `currentPage` / `pageSize` / `numberOfElements` in the JSON payload.
 export interface PageResponse<T> {
   content: T[];
   totalElements: number;
   totalPages: number;
-  currentPage: number;
-  pageSize: number;
-  numberOfElements: number;
+  number: number;
+  size: number;
   first: boolean;
   last: boolean;
   empty: boolean;

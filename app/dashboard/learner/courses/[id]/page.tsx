@@ -4,7 +4,9 @@ import { useEffect, useState, use } from "react";
 import { RoleGuard } from "@/components/shared/role-guard";
 import { EmptyState } from "@/components/shared/empty-state";
 import { fetchCourseDetail, enrollCourse, fetchCourseCoverImagePresignedUrl, completeLesson } from "@/lib/api/courses";
-import { CourseDetailResponse, CourseResponse, LessonResponse } from "@/lib/api/types";
+import { CourseDetailResponse, CourseResponse, LessonResponse,
+  RoleName,
+} from "@/lib/api/types";
 import { APIError } from "@/lib/api/client";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -31,7 +33,7 @@ function CourseDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
         
         if (data.coverImageUrl) {
           try {
-            const { presignedUrl } = await fetchCourseCoverImagePresignedUrl(courseId);
+            const presignedUrl = await fetchCourseCoverImagePresignedUrl(courseId);
             setCoverImageUrl(presignedUrl);
           } catch (err) {
             setCoverImageUrl(data.coverImageUrl || null);
@@ -142,7 +144,7 @@ function CourseDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
             {coverImageUrl || course.coverImageUrl ? (
               <div className="aspect-video relative bg-black">
                 <img 
-                  src={coverImageUrl || course.coverImageUrl} 
+                  src={coverImageUrl || course.coverImageUrl || ""} 
                   alt={course.title} 
                   className="w-full h-full object-cover"
                 />
@@ -296,7 +298,7 @@ function CourseDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
 
 export default function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   return (
-    <RoleGuard roles={["INTERN"]}>
+    <RoleGuard roles={[RoleName.INTERN]}>
       <CourseDetailContent paramsPromise={params} />
     </RoleGuard>
   );

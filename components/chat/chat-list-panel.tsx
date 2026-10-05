@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { format, isToday, isYesterday } from "date-fns";
-import { MessageSquare, Plus, MoreVertical, Trash2 } from "lucide-react";
+import { MessageSquare, Plus } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,7 +35,7 @@ interface ChatListPanelProps {
 
 export function ChatListPanel({ onCreateChat }: ChatListPanelProps) {
   const { user } = useAuth();
-  const { state, fetchConversations, setCurrentConversation, deleteConversation } = useChat();
+  const { state, fetchConversations, setCurrentConversation } = useChat();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
@@ -54,17 +54,6 @@ export function ChatListPanel({ onCreateChat }: ChatListPanelProps) {
   const handleSelectChat = (conversation: ConversationResponse) => {
     setSelectedId(conversation.id);
     setCurrentConversation(conversation);
-  };
-
-  const handleDelete = async (e: React.MouseEvent, conversationId: string) => {
-    e.stopPropagation();
-    if (confirm("Are you sure you want to delete this conversation?")) {
-      if (selectedId === conversationId) {
-        setSelectedId(null);
-      }
-      await deleteConversation(conversationId);
-      setMenuOpenId(null);
-    }
   };
 
   if (state.isLoadingConversations && state.conversations.length === 0) {
@@ -152,23 +141,7 @@ export function ChatListPanel({ onCreateChat }: ChatListPanelProps) {
                       <span className="text-xs text-muted-foreground">
                         {formatMessageTime(conversation.updatedAt)}
                       </span>
-                      <DropdownMenu open={menuOpenId === conversation.id} onOpenChange={(open) => setMenuOpenId(open ? conversation.id : null)}>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()}>
-                            <MoreVertical className="h-3 w-3" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={(e) => handleDelete(e, conversation.id)}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+</div>
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-muted-foreground truncate">

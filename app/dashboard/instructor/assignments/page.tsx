@@ -29,7 +29,7 @@ export default function AssignmentsPage() {
   const fetchAssignments = async () => {
     try {
       setIsLoading(true);
-      const response = await assignmentApi.getAssignments(0, 50);
+      const response = await assignmentApi.getAssignments({ page: 0, size: 50 });
       setAssignments(response.content);
     } catch (error: any) {
       console.error("Failed to fetch assignments:", error);
@@ -102,7 +102,7 @@ export default function AssignmentsPage() {
   return (
     <RoleGuard roles={["INSTRUCTOR"]}>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold">Assignments</h1>
             <p className="mt-2 text-muted-foreground">
@@ -119,18 +119,16 @@ export default function AssignmentsPage() {
           <EmptyState
             title="No assignments created"
             description="Create assignments to engage your students and assess their learning"
-            action={
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Your First Assignment
-              </Button>
-            }
+            action={{
+              label: "Create Your First Assignment",
+              onClick: () => setShowCreateDialog(true),
+            }}
           />
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {assignments.map((assignment) => {
-              const dueDate = new Date(assignment.dueDate);
-              const isOverdue = isPast(dueDate);
+              const dueDate = assignment.dueAt ? new Date(assignment.dueAt) : null;
+              const isOverdue = dueDate !== null && isPast(dueDate);
 
               return (
                 <Card key={assignment.id} className="hover:shadow-lg transition-shadow">
@@ -139,7 +137,7 @@ export default function AssignmentsPage() {
                       <div className="flex-1">
                         <CardTitle className="line-clamp-1">{assignment.title}</CardTitle>
                         <CardDescription className="line-clamp-2 mt-1">
-                          {assignment.description}
+                          {assignment.instructions}
                         </CardDescription>
                       </div>
                       <Badge variant={isOverdue ? "destructive" : "default"}>
@@ -151,7 +149,7 @@ export default function AssignmentsPage() {
                     <div className="space-y-4">
                       <div className="flex items-center text-sm text-muted-foreground">
                         <Calendar className="w-4 h-4 mr-2" />
-                        <span>Due: {format(dueDate, "MMM d, yyyy")}</span>
+                        <span>Due: {dueDate ? format(dueDate, "MMM d, yyyy") : "Not set"}</span>
                       </div>
 
                       <div className="flex items-center gap-2">

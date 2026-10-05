@@ -1,18 +1,7 @@
-import { RegisterForm } from "@/components/auth/register-form";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { redirect } from "next/navigation";
 
-export const metadata = {
-  title: "Sign Up - TrailForge",
-  description: "Create your TrailForge account",
-};
-
-export default function RegisterPage() {
-  return (
-    <div className="min-h-screen flex flex-col">
-      <div className="absolute top-4 right-4">
-        <ThemeToggle />
-      </div>
-      <RegisterForm />
-    </div>
-  );
+// Registration now lives outside the auth layout at /register
+// so it renders full-screen without the max-w-sm wrapper constraint.
+export default function RegisterRedirectPage() {
+  redirect("/register");
 }

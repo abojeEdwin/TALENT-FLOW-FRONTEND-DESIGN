@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { RoleGuard } from "@/components/shared/role-guard";
-import { listInstructors, onboardInstructor, AdminUserSummaryResponse, PagedResponse, UserStatus } from "@/lib/api/admin";
+import { listInstructors, onboardInstructor, AdminUserSummaryResponse, UserStatus } from "@/lib/api/admin";
+import { RoleName } from "@/lib/api/types";
 import { APIError } from "@/lib/api/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -46,15 +47,14 @@ export default function AdminInstructorsPage() {
   const fetchInstructors = async (page: number = 0) => {
     setIsLoadingList(true);
     try {
-      const response = await listInstructors(
-        searchQuery || undefined,
-        undefined,
+      const response = await listInstructors({
+        query: searchQuery || undefined,
         page,
-        pageSize
-      );
+        size: pageSize,
+      });
       setInstructors(response.content);
       setTotalPages(response.totalPages);
-      setCurrentPage(response.currentPage);
+      setCurrentPage(response.number);
     } catch (error) {
       if (error instanceof APIError) {
         toast.error(error.message || "Failed to load instructors");
@@ -137,9 +137,9 @@ export default function AdminInstructorsPage() {
   };
 
   return (
-    <RoleGuard roles={["ADMIN"]}>
+    <RoleGuard roles={[RoleName.ORG_ADMIN]}>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Instructor Management</h1>
             <p className="mt-2 text-gray-600">Manage instructor onboarding and profiles</p>
@@ -166,7 +166,7 @@ export default function AdminInstructorsPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">
                       First Name
@@ -294,7 +294,7 @@ export default function AdminInstructorsPage() {
             ) : (
               <>
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full min-w-[800px]">
                     <thead className="border-b bg-gray-50">
                       <tr>
                         <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">
@@ -369,7 +369,7 @@ export default function AdminInstructorsPage() {
                 </div>
 
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mt-4 pt-4 border-t">
                     <span className="text-sm text-gray-500">
                       Page {currentPage + 1} of {totalPages}
                     </span>

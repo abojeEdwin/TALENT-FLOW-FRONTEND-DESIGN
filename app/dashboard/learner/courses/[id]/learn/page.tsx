@@ -4,23 +4,17 @@ import { useEffect, useState, use, useCallback } from "react";
 import { RoleGuard } from "@/components/shared/role-guard";
 import { EmptyState } from "@/components/shared/empty-state";
 import { fetchCourseDetail, completeLesson } from "@/lib/api/courses";
-import { CourseDetailResponse, CourseModuleResponse } from "@/lib/api/types";
+import { CourseDetailResponse, CourseModuleResponse,
+  RoleName,
+} from "@/lib/api/types";
+import { LessonType } from "@/lib/api/types";
+import type { LessonResponse } from "@/lib/api/types";
 import { APIError } from "@/lib/api/client";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Play, BookOpen, Clock, CheckCircle, Circle, ChevronDown, ChevronRight, GraduationCap, FileText, Video as VideoIcon, FileAudio, ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-interface Lesson {
-  id: string;
-  title: string;
-  type: string;
-  contentUrl?: string;
-  contentText?: string;
-  position: number;
-  completed?: boolean;
-}
 
 function LessonViewerContent({ paramsPromise }: { paramsPromise: Promise<{ id: string }> }) {
   const params = use(paramsPromise);
@@ -29,7 +23,7 @@ function LessonViewerContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
   const initialLessonId = searchParams.get("lessonId");
   
   const [course, setCourse] = useState<CourseDetailResponse | null>(null);
-  const [currentLesson, setCurrentLesson] = useState<(Lesson & { moduleTitle: string }) | null>(null);
+  const [currentLesson, setCurrentLesson] = useState<(LessonResponse & { moduleTitle: string }) | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCompleting, setIsCompleting] = useState(false);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
@@ -66,7 +60,7 @@ function LessonViewerContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
     loadCourse();
   }, [loadCourse]);
 
-  const findLesson = (courseData: CourseDetailResponse | null, lessonId: string): (Lesson & { moduleTitle: string }) | null => {
+  const findLesson = (courseData: CourseDetailResponse | null, lessonId: string): (LessonResponse & { moduleTitle: string }) | null => {
     if (!courseData?.modules) return null;
     for (const module of courseData.modules) {
       for (const lesson of module.lessons) {
@@ -126,9 +120,9 @@ function LessonViewerContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
     return "";
   };
 
-  const getAllLessons = (): (Lesson & { moduleTitle: string })[] => {
+  const getAllLessons = (): (LessonResponse & { moduleTitle: string })[] => {
     if (!course?.modules) return [];
-    const lessons: (Lesson & { moduleTitle: string })[] = [];
+    const lessons: (LessonResponse & { moduleTitle: string })[] = [];
     for (const module of course.modules) {
       for (const lesson of module.lessons) {
         lessons.push({ ...lesson, moduleTitle: module.title });
@@ -257,7 +251,7 @@ function LessonViewerContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
         ) : (
           <>
             <div className="rounded-lg border border-border bg-card overflow-hidden">
-              {currentLesson.type === 'VIDEO' && currentLesson.contentUrl ? (
+              {currentLesson.lessonType === LessonType.VIDEO && currentLesson.contentUrl ? (
                 <div className="aspect-video bg-black">
                   <video 
                     src={currentLesson.contentUrl} 
@@ -265,7 +259,7 @@ function LessonViewerContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
                     className="w-full h-full"
                   />
                 </div>
-              ) : currentLesson.type === 'PDF' && currentLesson.contentUrl ? (
+              ) : currentLesson.lessonType === LessonType.PDF && currentLesson.contentUrl ? (
                 <div className="aspect-video bg-muted flex items-center justify-center">
                   <iframe 
                     src={currentLesson.contentUrl} 
@@ -337,7 +331,7 @@ function LessonViewerContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
 
 export default function LessonViewerPage({ params }: { params: Promise<{ id: string }> }) {
   return (
-    <RoleGuard roles={["INTERN"]}>
+    <RoleGuard roles={[RoleName.INTERN]}>
       <LessonViewerContent paramsPromise={params} />
     </RoleGuard>
   );

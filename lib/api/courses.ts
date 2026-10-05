@@ -1,120 +1,114 @@
-import { fetchAPI } from "./client";
+import { fetchAPI, APIError } from "./client";
 import {
-  CourseListResponse,
+  ErrorResponse,
+  Page,
   CourseResponse,
   CourseDetailResponse,
   CreateCourseRequest,
-  UpdateCourseRequest,
-  EnrollmentResponse,
-  AssignInstructorsRequest,
+  LessonResponse,
   CourseModuleResponse,
   CreateCourseModuleRequest,
-  LessonResponse,
   CreateLessonRequest,
+  AssignInstructorsRequest,
+  CourseStatus,
+  LessonCompletionResponse,
 } from "./types";
 
 // Learner endpoints
-export async function fetchPublishedCourses(
-  page: number = 0,
-  size: number = 20,
-  level?: string,
-  tags?: string[]
-): Promise<CourseResponse[]> {
-  return fetchAPI<CourseResponse[]>(`/learner/courses`);
+
+/** GET /api/v1/learner/courses - flat list of published courses. */
+export async function fetchPublishedCourses(): Promise<CourseResponse[]> {
+  return fetchAPI<CourseResponse[]>("/learner/courses");
 }
 
+/** GET /api/v1/learner/courses/my */
 export async function fetchLearnerCourses(): Promise<CourseResponse[]> {
   return fetchAPI<CourseResponse[]>("/learner/courses/my");
 }
 
-export async function fetchLearnerCoursesWithCoverImages(): Promise<CourseResponse[]> {
-  const courses = await fetchLearnerCourses();
-  
-  if (!courses?.length) {
-    return [];
-  }
-
-  const coursesWithImages = await Promise.all(
-    courses.map(async (course) => {
-      try {
-        const { presignedUrl } = await fetchCourseCoverImagePresignedUrl(course.id);
-        return { ...course, coverImageUrl: presignedUrl };
-      } catch {
-        return course;
-      }
-    })
+/** GET /api/v1/learner/courses/{courseId} */
+/**
+ * There is no `GET /api/v1/instructor/courses/{courseId}` on the backend, so the
+ * single-course view is derived from the instructor's own course list.
+ */
+export async function fetchInstructorCourseDetail(
+  courseId: string
+): Promise<CourseResponse> {
+  const page = await fetchAPI<Page<CourseResponse>>(
+    `/instructor/my-courses?page=0&size=100`
   );
-
-  return coursesWithImages;
+  const course = page.content.find((c) => c.id === courseId);
+  if (!course) {
+    throw new APIError(404, {
+      status: 404,
+      error: "Not Found",
+      message: `Course ${courseId} not found`,
+      path: `/instructor/courses/${courseId}`,
+    } as ErrorResponse);
+  }
+  return course;
 }
 
-export async function fetchCourseById(id: string): Promise<CourseResponse> {
-  return fetchAPI<CourseResponse>(`/learner/courses/${id}`);
-}
-
-export async function fetchCourseDetail(id: string): Promise<CourseDetailResponse> {
+export async function fetchCourseDetail(
+  id: string
+): Promise<CourseDetailResponse> {
   return fetchAPI<CourseDetailResponse>(`/learner/courses/${id}`);
 }
 
-export async function enrollCourse(courseId: string): Promise<CourseResponse> {
+/** POST /api/v1/learner/courses/{courseId}/enroll */
+export async function enrollCourse(
+  courseId: string
+): Promise<CourseResponse> {
   return fetchAPI<CourseResponse>(`/learner/courses/${courseId}/enroll`, {
     method: "POST",
   });
 }
 
-export async function completeLesson(lessonId: string): Promise<void> {
-  return fetchAPI<void>(`/lessons/${lessonId}/complete`, {
+/** POST /api/v1/lessons/{lessonId}/complete */
+export async function completeLesson(
+  lessonId: string
+): Promise<LessonCompletionResponse> {
+  return fetchAPI<LessonCompletionResponse>(`/lessons/${lessonId}/complete`, {
     method: "POST",
   });
 }
 
-export interface LessonDetailResponse {
-  id: string;
-  title: string;
-  type: string;
-  contentUrl?: string;
-  contentText?: string;
-  position: number;
-  completed?: boolean;
-}
-
-export async function fetchLessonDetail(lessonId: string): Promise<LessonDetailResponse> {
-  return fetchAPI<LessonDetailResponse>(`/instructor/lessons/${lessonId}`);
+/** GET /api/v1/instructor/lessons/{lessonId} */
+export async function fetchLessonDetail(
+  lessonId: string
+): Promise<LessonResponse> {
+  return fetchAPI<LessonResponse>(`/instructor/lessons/${lessonId}`);
 }
 
 // Instructor endpoints
-export async function fetchInstructorCourses(): Promise<CourseResponse[]> {
-  const response = await fetchAPI<CourseListResponse>("/instructor/my-courses");
-  return response.content || [];
-}
 
-export async function fetchInstructorCoursesWithCoverImages(): Promise<CourseResponse[]> {
-  const courses = await fetchInstructorCourses();
-  
-  if (!courses?.length) {
-    return [];
-  }
+/** GET /api/v1/instructor/my-courses - Spring Page, not a bare array. */
+export async function fetchInstructorCourses(params?: {
+  status?: CourseStatus;
+  page?: number;
+  size?: number;
+}): Promise<CourseResponse[]> {
+  const search = new URLSearchParams({
+    page: (params?.page ?? 0).toString(),
+    size: (params?.size ?? 20).toString(),
+  });
+  if (params?.status) search.append("status", params.status);
 
-  const coursesWithImages = await Promise.all(
-    courses.map(async (course) => {
-      try {
-        const { presignedUrl } = await fetchCourseCoverImagePresignedUrl(course.id);
-        return { ...course, coverImageUrl: presignedUrl };
-      } catch {
-        return course;
-      }
-    })
+  const response = await fetchAPI<Page<CourseResponse>>(
+    `/instructor/my-courses?${search.toString()}`
   );
-
-  return coursesWithImages;
+  return response.content ?? [];
 }
 
+/**
+ * POST /api/v1/instructor/courses
+ * Send multipart when media is attached, otherwise JSON.
+ */
 export async function createCourse(
   data: CreateCourseRequest,
   coverImage?: File,
   introVideo?: File
 ): Promise<CourseResponse> {
-  // If files are provided, use multipart form data
   if (coverImage || introVideo) {
     const formData = new FormData();
     formData.append("title", data.title);
@@ -125,107 +119,47 @@ export async function createCourse(
     return fetchAPI<CourseResponse>("/instructor/courses", {
       method: "POST",
       body: formData,
-      headers: {},
     });
   }
 
-  // Otherwise use JSON
   return fetchAPI<CourseResponse>("/instructor/courses", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
-export async function updateCourse(
-  id: string,
-  data: UpdateCourseRequest
-): Promise<CourseResponse> {
-  return fetchAPI<CourseResponse>(`/courses/${id}`, {
-    method: "PATCH",
-    body: JSON.stringify(data),
-  });
-}
-
-export async function deleteCourse(id: string): Promise<void> {
-  return fetchAPI<void>(`/courses/${id}`, {
-    method: "DELETE",
-  });
-}
-
 // Admin endpoints
-export async function fetchAdminCourses(status?: string): Promise<CourseResponse[]> {
-  const params = new URLSearchParams({});
-  if (status) params.append("status", status);
-  const queryString = params.toString();
-  return fetchAPI<CourseResponse[]>(`/admin/courses${queryString ? `?${queryString}` : ''}`);
+
+/** GET /api/v1/admin/courses */
+export async function fetchAdminCourses(): Promise<CourseResponse[]> {
+  return fetchAPI<CourseResponse[]>("/admin/courses");
 }
 
-export async function publishCourse(courseId: string): Promise<CourseResponse> {
+export async function publishCourse(
+  courseId: string
+): Promise<CourseResponse> {
   return fetchAPI<CourseResponse>(`/admin/courses/${courseId}/publish`, {
     method: "PATCH",
   });
 }
 
-export async function unpublishCourse(courseId: string): Promise<CourseResponse> {
+export async function unpublishCourse(
+  courseId: string
+): Promise<CourseResponse> {
   return fetchAPI<CourseResponse>(`/admin/courses/${courseId}/unpublish`, {
     method: "PATCH",
   });
 }
 
-export async function archiveCourse(courseId: string): Promise<CourseResponse> {
+export async function archiveCourse(
+  courseId: string
+): Promise<CourseResponse> {
   return fetchAPI<CourseResponse>(`/admin/courses/${courseId}/archive`, {
     method: "PATCH",
   });
 }
 
-export async function fetchCourseCoverImagePresignedUrl(
-  courseId: string
-): Promise<{ presignedUrl: string }> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
-  
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/v1/courses/${courseId}/cover-image`, {
-    method: "GET",
-    headers: token ? { "Authorization": `Bearer ${token}` } : {},
-    redirect: "manual",
-  });
-
-  if (response.status === 302 || response.status === 301) {
-    const location = response.headers.get("Location");
-    if (location) {
-      return { presignedUrl: location };
-    }
-  }
-  
-  throw new Error("Failed to get cover image URL");
-}
-
-export async function fetchPublishedCoursesWithCoverImages(
-  page: number = 0,
-  size: number = 20,
-  level?: string,
-  tags?: string[]
-): Promise<CourseResponse[]> {
-  const courses = await fetchPublishedCourses(page, size, level, tags);
-  
-  if (!courses?.length) {
-    return [];
-  }
-
-  const coursesWithImages = await Promise.all(
-    courses.map(async (course: CourseResponse) => {
-      try {
-        const { presignedUrl } = await fetchCourseCoverImagePresignedUrl(course.id);
-        return { ...course, coverImageUrl: presignedUrl };
-      } catch (err) {
-        console.log("Failed to get cover image for course:", course.id, err);
-        return course;
-      }
-    })
-  );
-
-  return coursesWithImages;
-}
-
+/** PUT /api/v1/admin/courses/{courseId}/instructors */
 export async function assignInstructors(
   courseId: string,
   data: AssignInstructorsRequest
@@ -236,22 +170,76 @@ export async function assignInstructors(
   });
 }
 
-// Course Module endpoints
+/** GET /api/v1/admin/courses/{courseId}/enrollments/... */
+export async function revokeEnrollment(
+  courseId: string,
+  userId: string
+): Promise<void> {
+  await fetchAPI(`/admin/courses/${courseId}/enrollments/${userId}`, {
+    method: "DELETE",
+  });
+}
+
+export async function bulkEnrollCohort(
+  courseId: string,
+  cohortId: string
+): Promise<void> {
+  await fetchAPI(
+    `/admin/courses/${courseId}/enrollments/cohorts/${cohortId}`,
+    { method: "POST" }
+  );
+}
+
+export async function bulkEnrollTeam(
+  courseId: string,
+  teamId: string
+): Promise<void> {
+  await fetchAPI(`/admin/courses/${courseId}/enrollments/teams/${teamId}`, {
+    method: "POST",
+  });
+}
+
+// Course module endpoints
+
 export async function createCourseModule(
   courseId: string,
   data: CreateCourseModuleRequest
 ): Promise<CourseModuleResponse> {
-  return fetchAPI<CourseModuleResponse>(`/instructor/courses/${courseId}/modules`, {
-    method: "POST",
+  return fetchAPI<CourseModuleResponse>(
+    `/instructor/courses/${courseId}/modules`,
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+    }
+  );
+}
+
+export async function fetchCourseModules(
+  courseId: string
+): Promise<CourseModuleResponse[]> {
+  return fetchAPI<CourseModuleResponse[]>(
+    `/instructor/courses/${courseId}/modules`
+  );
+}
+
+export async function updateCourseModule(
+  moduleId: string,
+  data: CreateCourseModuleRequest
+): Promise<CourseModuleResponse> {
+  return fetchAPI<CourseModuleResponse>(`/instructor/modules/${moduleId}`, {
+    method: "PUT",
     body: JSON.stringify(data),
   });
 }
 
-export async function fetchCourseModules(courseId: string): Promise<CourseModuleResponse[]> {
-  return fetchAPI<CourseModuleResponse[]>(`/instructor/courses/${courseId}/modules`);
+export async function deleteCourseModule(moduleId: string): Promise<void> {
+  await fetchAPI(`/instructor/modules/${moduleId}`, { method: "DELETE" });
 }
 
 // Lesson endpoints
+// NOTE: the backend has no "list lessons for a module" endpoint. Lessons are
+// read through GET /instructor/courses/{courseId}/modules, which nests them.
+
 export async function createLesson(
   moduleId: string,
   data: CreateLessonRequest
@@ -265,7 +253,7 @@ export async function createLesson(
 export async function createLessonWithFile(
   moduleId: string,
   title: string,
-  lessonType: string,
+  lessonType: LessonResponse["lessonType"],
   position: number,
   file: File
 ): Promise<LessonResponse> {
@@ -278,10 +266,87 @@ export async function createLessonWithFile(
   return fetchAPI<LessonResponse>(`/instructor/modules/${moduleId}/lessons`, {
     method: "POST",
     body: formData,
-    headers: {},
   });
 }
 
-export async function fetchModuleLessons(moduleId: string): Promise<LessonResponse[]> {
-  return fetchAPI<LessonResponse[]>(`/instructor/modules/${moduleId}/lessons`);
+export async function updateLesson(
+  lessonId: string,
+  data: CreateLessonRequest
+): Promise<LessonResponse> {
+  return fetchAPI<LessonResponse>(`/instructor/lessons/${lessonId}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteLesson(lessonId: string): Promise<void> {
+  await fetchAPI(`/instructor/lessons/${lessonId}`, { method: "DELETE" });
+}
+
+// Cover images
+// The cover-image endpoint answers with a 302 to a presigned S3 URL, so it is
+// called directly rather than through fetchAPI (which cannot follow the
+// redirect manually).
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || "v1";
+
+export async function fetchCourseCoverImagePresignedUrl(
+  courseId: string
+): Promise<string> {
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("auth_token")
+      : null;
+
+  const response = await fetch(
+    `${API_BASE_URL}/${API_VERSION}/courses/${courseId}/cover-image`,
+    {
+      method: "GET",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      redirect: "manual",
+    }
+  );
+
+  if (response.status === 302 || response.status === 301) {
+    const location = response.headers.get("Location");
+    if (location) return location;
+  }
+
+  throw new Error("Failed to get cover image URL");
+}
+
+async function withCoverImages(
+  courses: CourseResponse[]
+): Promise<CourseResponse[]> {
+  if (!courses?.length) return [];
+
+  return Promise.all(
+    courses.map(async (course) => {
+      try {
+        const url = await fetchCourseCoverImagePresignedUrl(course.id);
+        return { ...course, coverImageUrl: url };
+      } catch {
+        return course;
+      }
+    })
+  );
+}
+
+export async function fetchPublishedCoursesWithCoverImages(): Promise<
+  CourseResponse[]
+> {
+  return withCoverImages(await fetchPublishedCourses());
+}
+
+export async function fetchLearnerCoursesWithCoverImages(): Promise<
+  CourseResponse[]
+> {
+  return withCoverImages(await fetchLearnerCourses());
+}
+
+export async function fetchInstructorCoursesWithCoverImages(): Promise<
+  CourseResponse[]
+> {
+  return withCoverImages(await fetchInstructorCourses());
 }

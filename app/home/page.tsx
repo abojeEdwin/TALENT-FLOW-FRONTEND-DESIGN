@@ -73,10 +73,10 @@ function Navbar() {
               Sign In
             </Link>
             <Link 
-              href="/auth/register" 
+              href="/register" 
               className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-transparent px-4 py-2 text-sm font-medium text-foreground hover:bg-foreground/10"
             >
-              Get Started
+              Register Organisation
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -111,10 +111,10 @@ function Navbar() {
                 Sign In
               </Link>
               <Link 
-                href="/auth/register" 
+                href="/register" 
                 className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-transparent px-4 py-2 text-sm font-medium text-foreground hover:bg-foreground/10"
               >
-                Get Started
+                Register Organisation
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -158,10 +158,10 @@ function Hero() {
           
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link 
-              href="/auth/register" 
+              href="/register" 
               className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-8 py-3 text-lg font-semibold text-primary-foreground hover:bg-primary/90"
             >
-              Start Free Trial
+              Register Your Organisation
               <ArrowRight className="w-4 h-4" />
             </Link>
             <button className="inline-flex items-center justify-center gap-2 rounded-md border border-white/20 bg-white/10 backdrop-blur px-8 py-3 text-lg font-semibold text-white hover:bg-white/20">
@@ -347,10 +347,10 @@ function CTASection() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link 
-                href="/auth/register" 
+                href="/register" 
                 className="inline-flex items-center justify-center gap-2 rounded-md bg-white px-8 py-3 text-base font-medium text-black hover:bg-white/90"
               >
-                Start Free Trial
+                Register Your Organisation
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <button className="inline-flex items-center justify-center gap-2 rounded-md border-2 border-white px-8 py-3 text-base font-medium text-white hover:bg-white/10">
