@@ -159,7 +159,7 @@ function BrowseCoursesContent() {
 
 export default function LearnerCoursesPage() {
   return (
-    <RoleGuard roles={[RoleName.INTERN]}>
+    <RoleGuard roles={[RoleName.LEARNER]}>
       <BrowseCoursesContent />
     </RoleGuard>
   );

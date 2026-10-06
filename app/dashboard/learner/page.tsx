@@ -114,7 +114,7 @@ function LearnerDashboardContent() {
 
 export default function LearnerDashboard() {
   return (
-    <RoleGuard roles={[RoleName.INTERN]}>
+    <RoleGuard roles={[RoleName.LEARNER]}>
       <LearnerDashboardContent />
     </RoleGuard>
   );

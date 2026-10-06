@@ -82,7 +82,7 @@ import {
 const ROLE_OPTIONS = [
   { value: RoleName.ORG_ADMIN, label: "Admin" },
   { value: RoleName.INSTRUCTOR, label: "Instructor" },
-  { value: RoleName.INTERN, label: "Learner" },
+  { value: RoleName.LEARNER, label: "Learner" },
 ];
 
 const STATUS_OPTIONS = [

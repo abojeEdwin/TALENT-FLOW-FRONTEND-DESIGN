@@ -103,3 +103,15 @@ export async function markAllNotificationsAsRead(): Promise<void> {
   // /notifications/mark-all-read is deprecated and logs a warning server-side.
   await fetchAPI("/notifications/read-all", { method: "PATCH" });
 }
+
+export async function clearAllNotifications(): Promise<void> {
+  return fetchAPI<void>("/notifications", {
+    method: "DELETE",
+  });
+}
+
+export async function deleteNotification(id: string): Promise<void> {
+  return fetchAPI<void>(`/notifications/${id}`, {
+    method: "DELETE",
+  });
+}

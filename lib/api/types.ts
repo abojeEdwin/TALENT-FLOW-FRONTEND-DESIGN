@@ -1,9 +1,10 @@
 // API DTOs - mirrors the Spring records in com.talentFlow.*.web.dto
 
 export enum RoleName {
-  ORG_ADMIN = "ORG_ADMIN",   // Organisation admin — created on /auth/register
+  ORG_ADMIN = "ORG_ADMIN",
   INSTRUCTOR = "INSTRUCTOR",
-  INTERN = "INTERN",         // Learner role — named INTERN in the backend
+  LEARNER = "LEARNER",
+  SUPER_ADMIN = "SUPER_ADMIN",
 }
 
 export enum UserStatus {

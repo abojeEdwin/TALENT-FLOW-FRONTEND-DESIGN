@@ -331,7 +331,7 @@ function LessonViewerContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
 
 export default function LessonViewerPage({ params }: { params: Promise<{ id: string }> }) {
   return (
-    <RoleGuard roles={[RoleName.INTERN]}>
+    <RoleGuard roles={[RoleName.LEARNER]}>
       <LessonViewerContent paramsPromise={params} />
     </RoleGuard>
   );

@@ -3,7 +3,7 @@ import { RoleName, UserStatus, CourseStatus, LessonType } from "@/lib/api/types"
 export const ROLE_DISPLAY_NAMES: Record<string, string> = {
   [RoleName.ORG_ADMIN]: "Organisation Admin",
   [RoleName.INSTRUCTOR]: "Instructor",
-  [RoleName.INTERN]: "Learner",
+  [RoleName.LEARNER]: "Learner",
 };
 
 export const USER_STATUS_COLORS: Record<UserStatus, string> = {

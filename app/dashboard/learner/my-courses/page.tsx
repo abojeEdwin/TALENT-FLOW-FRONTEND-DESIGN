@@ -133,7 +133,7 @@ function MyCoursesContent() {
 
 export default function MyCoursesPage() {
   return (
-    <RoleGuard roles={[RoleName.INTERN]}>
+    <RoleGuard roles={[RoleName.LEARNER]}>
       <MyCoursesContent />
     </RoleGuard>
   );

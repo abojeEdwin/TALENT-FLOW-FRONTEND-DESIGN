@@ -57,7 +57,7 @@ export function NavSidebarContent({ onNavigate }: NavSidebarContentProps) {
     menuItems = [...ADMIN_MENU_ITEMS, ...menuItems];
   } else if (hasRole(RoleName.INSTRUCTOR)) {
     menuItems = [...INSTRUCTOR_MENU_ITEMS, ...menuItems];
-  } else if (hasRole(RoleName.INTERN)) {
+  } else if (hasRole(RoleName.LEARNER)) {
     menuItems = [...LEARNER_MENU_ITEMS, ...menuItems];
   }
 

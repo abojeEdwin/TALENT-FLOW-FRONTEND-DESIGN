@@ -298,7 +298,7 @@ function CourseDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
 
 export default function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   return (
-    <RoleGuard roles={[RoleName.INTERN]}>
+    <RoleGuard roles={[RoleName.LEARNER]}>
       <CourseDetailContent paramsPromise={params} />
     </RoleGuard>
   );

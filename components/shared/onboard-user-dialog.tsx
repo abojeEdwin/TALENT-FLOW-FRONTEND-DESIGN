@@ -17,7 +17,7 @@ const schema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().trim().email("Invalid email address"),
-  role: 'INSTRUCTOR' | 'INTERN';
+  role: z.enum(["INSTRUCTOR", "INTERN"], {
     required_error: "Please select a role",
   }),
 });
