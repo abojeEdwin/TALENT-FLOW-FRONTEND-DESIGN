@@ -45,7 +45,7 @@ export function ResetPasswordForm() {
   const onSubmit = async (data: ResetPasswordFormData) => {
     setIsSubmitting(true);
     try {
-      await resetPassword(token, data.password, data.confirmPassword);
+      await resetPassword(token, data.password);
       toast.success("Password reset successful!");
       router.push("/auth/login");
     } catch (error) {

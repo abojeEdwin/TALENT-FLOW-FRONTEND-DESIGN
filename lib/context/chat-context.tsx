@@ -266,8 +266,6 @@ interface ChatContextValue {
   addParticipants: (userIds: string[]) => Promise<void>;
   removeParticipant: (userId: string) => Promise<void>;
   searchUsers: (query: string) => Promise<SearchUserResponse[]>;
-  deleteConversation: (conversationId: string) => Promise<void>;
-  deleteMessage: (messageId: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -563,34 +561,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "SET_ERROR", payload: null });
   }, []);
 
-  const deleteConversation = useCallback(
-    async (conversationId: string) => {
-      dispatch({ type: "DELETE_CONVERSATION", payload: conversationId });
-
-      try {
-        await chatApi.deleteConversation(conversationId);
-      } catch (err) {
-        dispatch({ type: "SET_ERROR", payload: err instanceof Error ? err.message : "Failed to delete conversation" });
-      }
-    },
-    []
-  );
-
-  const deleteMessage = useCallback(
-    async (messageId: string) => {
-      if (!state.currentConversation) return;
-
-      dispatch({ type: "DELETE_MESSAGE", payload: messageId });
-
-      try {
-        await chatApi.deleteMessage(state.currentConversation.id, messageId);
-      } catch (err) {
-        dispatch({ type: "SET_ERROR", payload: err instanceof Error ? err.message : "Failed to delete message" });
-      }
-    },
-    [state.currentConversation]
-  );
-
   const value = useMemo(
     () => ({
       state,
@@ -604,8 +574,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       addParticipants,
       removeParticipant,
       searchUsers,
-      deleteConversation,
-      deleteMessage,
       clearError,
     }),
     [
@@ -620,8 +588,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       addParticipants,
       removeParticipant,
       searchUsers,
-      deleteConversation,
-      deleteMessage,
       clearError,
     ]
   );

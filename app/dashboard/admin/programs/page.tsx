@@ -50,12 +50,12 @@ import {
   createProjectTeam,
   listAllProjectTeams,
   allocateUserToTeam,
-  autoAllocateInterns,
+  autoAllocateLearners,
   listTeamMembers,
   listCohortTeams,
   listCohorts,
   listInstructors,
-  listUnallocatedInterns,
+  listUnallocatedLearners,
   AdminUserSummaryResponse,
   AdminUserDetailResponse,
   CohortResponse,
@@ -80,14 +80,14 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const ROLE_OPTIONS = [
-  { value: RoleName.ADMIN, label: "Admin" },
+  { value: RoleName.ORG_ADMIN, label: "Admin" },
   { value: RoleName.INSTRUCTOR, label: "Instructor" },
-  { value: RoleName.INTERN, label: "Intern" },
+  { value: RoleName.LEARNER, label: "Learner" },
 ];
 
 const STATUS_OPTIONS = [
   { value: UserStatus.ACTIVE, label: "Active", color: "bg-green-100 text-green-800" },
-  { value: UserStatus.INACTIVE, label: "Inactive", color: "bg-gray-100 text-gray-800" },
+  { value: UserStatus.DISABLED, label: "Inactive", color: "bg-gray-100 text-gray-800" },
   { value: UserStatus.LOCKED, label: "Locked", color: "bg-red-100 text-red-800" },
 ];
 
@@ -199,11 +199,11 @@ function CohortsTab() {
                   <TableRow key={cohort.id}>
                     <TableCell className="font-medium">{cohort.name}</TableCell>
                     <TableCell>{cohort.description}</TableCell>
-                    <TableCell>{(cohort as any).intakeYear || "-"}</TableCell>
+                    <TableCell>{cohort.intakeYear ?? "-"}</TableCell>
                     <TableCell>{new Date(cohort.startDate).toLocaleDateString()}</TableCell>
                     <TableCell>{new Date(cohort.endDate).toLocaleDateString()}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{cohort.status}</Badge>
+                      <Badge variant="outline">{cohort.isActive ? "Active" : "Inactive"}</Badge>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -246,7 +246,7 @@ function CohortsTab() {
                 max={2100}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label>Start Date</Label>
                 <Input
@@ -322,7 +322,7 @@ function TeamsTab() {
 
   const fetchAvailableInterns = async () => {
     try {
-      const response = await listUnallocatedInterns(undefined, undefined, 0, 100);
+      const response = await listUnallocatedLearners({ page: 0, size: 100 });
       setAvailableInterns(response.content);
     } catch (error) {
       console.error("Failed to fetch interns:", error);
@@ -369,7 +369,7 @@ function TeamsTab() {
   const handleAutoAllocate = async (team: ProjectTeamResponse) => {
     try {
       setAutoAllocating(true);
-      const result = await autoAllocateInterns(team.id);
+      const result = await autoAllocateLearners(team.id);
       toast.success(`Successfully allocated ${result.allocatedCount} intern(s)`);
     } catch (error) {
       toast.error("Failed to auto-allocate interns");
@@ -581,14 +581,12 @@ function InstructorsTab() {
     email: "",
     firstName: "",
     lastName: "",
-    bio: "",
-    expertise: "",
   });
 
   const fetchInstructors = async () => {
     setLoading(true);
     try {
-      const response = await listInstructors(undefined, undefined, 0, 100);
+      const response = await listInstructors({ page: 0, size: 100 });
       setUsers(response.content);
     } catch (error) {
       console.error("Failed to fetch instructors:", error);
@@ -606,7 +604,7 @@ function InstructorsTab() {
       await onboardInstructor(formData);
       toast.success("Instructor onboarded successfully");
       setDialogOpen(false);
-      setFormData({ email: "", firstName: "", lastName: "", bio: "", expertise: "" });
+      setFormData({ email: "", firstName: "", lastName: "" });
       fetchInstructors();
     } catch (error) {
       toast.error("Failed to onboard instructor");
@@ -666,7 +664,7 @@ function InstructorsTab() {
             <DialogDescription>Add a new instructor to the platform</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label>First Name</Label>
                 <Input

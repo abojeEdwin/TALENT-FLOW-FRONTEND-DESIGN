@@ -62,9 +62,9 @@ export function ProvideFeedbackDialog({
     try {
       setIsSubmitting(true);
 
-      await assignmentApi.provideFeedback(assignmentId, submission.id, {
-        grade: data.grade,
-        feedback: data.feedback,
+      await assignmentApi.provideFeedback(submission.id, {
+        score: data.grade,
+        comment: data.feedback,
       });
 
       toast.success("Feedback provided successfully");

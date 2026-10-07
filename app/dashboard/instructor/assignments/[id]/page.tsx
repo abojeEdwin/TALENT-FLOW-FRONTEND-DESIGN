@@ -22,9 +22,12 @@ export default function AssignmentDetailPage() {
   const assignmentId = params.id as string;
 
   const [assignment, setAssignment] = useState<AssignmentResponse | null>(null);
-  const [submissions, setSubmissions] = useState<AssignmentSubmissionResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedSubmission, setSelectedSubmission] = useState<AssignmentSubmissionResponse | null>(null);
+  // The backend has no endpoint to list submissions for an assignment, so this
+  // stays empty until that endpoint exists.
+  const [submissions] = useState<AssignmentSubmissionResponse[]>([]);
+  const [selectedSubmission, setSelectedSubmission] =
+    useState<AssignmentSubmissionResponse | null>(null);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
 
   useEffect(() => {
@@ -34,12 +37,10 @@ export default function AssignmentDetailPage() {
   const fetchAssignmentDetails = async () => {
     try {
       setIsLoading(true);
-      const [assignmentData, submissionsData] = await Promise.all([
-        assignmentApi.getAssignment(assignmentId),
-        assignmentApi.getAssignmentSubmissions(assignmentId, 0, 100),
-      ]);
+      // The backend has no "list submissions for an assignment" endpoint, so
+      // only the assignment itself can be loaded here.
+      const assignmentData = await assignmentApi.getAssignment(assignmentId);
       setAssignment(assignmentData);
-      setSubmissions(submissionsData.content);
     } catch (error) {
       console.error("Failed to fetch assignment details:", error);
       toast.error("Failed to load assignment details");
@@ -98,7 +99,7 @@ export default function AssignmentDetailPage() {
           </Button>
           <div className="flex-1">
             <h1 className="text-3xl font-bold">{assignment.title}</h1>
-            <p className="text-muted-foreground mt-1">{assignment.description}</p>
+            <p className="text-muted-foreground mt-1">{assignment.instructions}</p>
           </div>
         </div>
 
@@ -148,14 +149,14 @@ export default function AssignmentDetailPage() {
               <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
               <span className="text-muted-foreground">Due Date:</span>
               <span className="ml-2 font-medium">
-                {format(new Date(assignment.dueDate), "MMMM d, yyyy 'at' h:mm a")}
+                {assignment.dueAt ? format(new Date(assignment.dueAt), "MMMM d, yyyy 'at' h:mm a") : "No due date"}
               </span>
             </div>
             <div className="flex items-center text-sm">
               <FileText className="w-4 h-4 mr-2 text-muted-foreground" />
               <span className="text-muted-foreground">Created:</span>
               <span className="ml-2 font-medium">
-                {format(new Date(assignment.createdAt), "MMMM d, yyyy")}
+                {format(new Date(assignment.createdByUserId), "MMMM d, yyyy")}
               </span>
             </div>
           </CardContent>
@@ -229,14 +230,14 @@ function SubmissionsList({ submissions, onProvideFeedback }: SubmissionsListProp
               <div className="flex items-start gap-4 flex-1">
                 <Avatar>
                   <AvatarFallback>
-                    {submission.user?.charAt(0).toUpperCase() ?? ""}
+                    {submission.learnerName?.charAt(0).toUpperCase() ?? ""}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 space-y-2">
                   <div>
-                    <p className="font-medium">{submission.user}</p>
+                    <p className="font-medium">{submission.learnerName}</p>
                     <p className="text-sm text-muted-foreground">
-                      Submitted {format(new Date(submission.submittedAt), "MMM d, yyyy 'at' h:mm a")}
+                      Submitted {submission.submittedAt ? format(new Date(submission.submittedAt), "MMM d, yyyy 'at' h:mm a") : "-"}
                     </p>
                   </div>
                   {submission.feedback && (
@@ -256,7 +257,8 @@ function SubmissionsList({ submissions, onProvideFeedback }: SubmissionsListProp
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open(submission.fileUrl, "_blank")}
+                  disabled={!submission.submissionFileUrl}
+                  onClick={() => window.open(submission.submissionFileUrl ?? "", "_blank")}
                 >
                   <Download className="w-4 h-4 mr-1" />
                   Download

@@ -66,10 +66,10 @@ export function CreateAssignmentDialog({
       if (assignment) {
         // Populate form with existing assignment data
         setValue("title", assignment.title);
-        setValue("description", assignment.description);
-        setValue("course", assignment.course);
+        setValue("description", assignment.instructions);
+        setValue("course", assignment.courseId);
         // Convert ISO date to datetime-local format
-        const dueDate = new Date(assignment.dueDate);
+        const dueDate = new Date(assignment.dueAt ?? Date.now());
         const localDate = new Date(dueDate.getTime() - dueDate.getTimezoneOffset() * 60000)
           .toISOString()
           .slice(0, 16);
@@ -102,21 +102,15 @@ export function CreateAssignmentDialog({
       // Convert local datetime to ISO string
       const dueDate = new Date(data.dueDate).toISOString();
 
-      if (assignment) {
-        // Update existing assignment
-        await assignmentApi.updateAssignment(assignment.id, {
-          ...data,
-          dueDate,
-        });
-        toast.success("Assignment updated successfully");
-      } else {
-        // Create new assignment
-        await assignmentApi.createAssignment({
-          ...data,
-          dueDate,
-        });
-        toast.success("Assignment created successfully");
-      }
+      // The backend only supports creating assignments; there is no update
+      // endpoint, so an existing assignment cannot be edited here.
+      await assignmentApi.createAssignment(data.course, {
+        title: data.title,
+        instructions: data.description,
+        dueAt: dueDate,
+        maxScore: 100,
+      });
+      toast.success("Assignment created successfully");
 
       onSuccess();
       reset();

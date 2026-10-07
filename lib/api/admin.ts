@@ -1,99 +1,55 @@
 import { fetchAPI } from "./client";
-import { UserStatus, RoleName } from "./types";
+import {
+  RoleName,
+  UserStatus,
+  Page,
+  AdminUserSummaryResponse,
+  AdminUserDetailResponse,
+  CohortResponse,
+  CreateCohortRequest,
+  ProjectTeamResponse,
+  CreateProjectTeamRequest,
+  TeamMemberResponse,
+  AllocateUserToTeamRequest,
+  AutoAllocateTeamMembersResponse,
+  CreateInstructorRequest,
+  CreateLearnerRequest,
+  OnboardUserResponse,
+} from "./types";
 
-export { RoleName, UserStatus } from "./types";
+export { RoleName, UserStatus };
 
-export interface AdminUserSummaryResponse {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  status: string;
-  lastLoginAt?: string;
+export type {
+  Page,
+  AdminUserSummaryResponse,
+  AdminUserDetailResponse,
+  CohortResponse,
+  CreateCohortRequest,
+  ProjectTeamResponse,
+  CreateProjectTeamRequest,
+  TeamMemberResponse,
+  AllocateUserToTeamRequest,
+  AutoAllocateTeamMembersResponse,
+  CreateInstructorRequest,
+  CreateLearnerRequest,
+  OnboardUserResponse,
+};
+
+export interface ListUsersParams {
+  query?: string;
+  status?: UserStatus;
+  page?: number;
+  size?: number;
+  sort?: string;
 }
 
-export interface AdminUserDetailResponse extends AdminUserSummaryResponse {
-  updatedAt: string;
-}
-
-export interface CohortResponse {
-  id: string;
-  name: string;
-  description?: string;
-  intakeYear: number;
-  startDate: string;
-  endDate: string;
-  isActive: boolean;
-  status?: string;
-}
-
-export interface ProjectTeamResponse {
-  id: string;
-  cohortId: string;
-  name: string;
-  description?: string;
-}
-
-export interface TeamMemberResponse {
-  userId: string;
-  email: string;
-  fullName: string;
-  teamRole: string;
-}
-
-export interface CreateCohortRequest {
-  name: string;
-  description?: string;
-  intakeYear: number;
-  startDate: string;
-  endDate: string;
-}
-
-export interface CreateProjectTeamRequest {
-  name: string;
-  cohortId: string;
-  description?: string;
-}
-
-export interface AllocateUserToTeamRequest {
-  userId: string;
-  teamRole: string;
-}
-
-export interface CreateInstructorRequest {
-  email: string;
-  firstName: string;
-  lastName: string;
-  bio?: string;
-  expertise?: string;
-}
-
-export interface OnboardInstructorResponse {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  roles: RoleName[];
-  status: UserStatus;
-  createdAt: string;
-}
-
-export interface PagedResponse<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  currentPage: number;
-  pageSize: number;
-}
-
-export async function listUsers(
-  query?: string,
-  status?: UserStatus,
-  page: number = 0,
-  size: number = 20,
-  sort?: string
-): Promise<PagedResponse<AdminUserSummaryResponse>> {
+function buildListParams({
+  query,
+  status,
+  page = 0,
+  size = 20,
+  sort,
+}: ListUsersParams): string {
   const params = new URLSearchParams({
     page: page.toString(),
     size: size.toString(),
@@ -103,71 +59,93 @@ export async function listUsers(
   if (status) params.append("status", status);
   if (sort) params.append("sort", sort);
 
-  return fetchAPI<PagedResponse<AdminUserSummaryResponse>>(`/admin/users?${params.toString()}`);
+  return params.toString();
 }
 
-export async function getUser(userId: string): Promise<AdminUserDetailResponse> {
+// NOTE: Spring's PathPatternParser does not match an optional trailing
+// separator, so collection endpoints mapped as @GetMapping("/") must be
+// requested WITH the trailing slash or they 404.
+
+export async function listUsers(
+  params: ListUsersParams = {}
+): Promise<Page<AdminUserSummaryResponse>> {
+  return fetchAPI<Page<AdminUserSummaryResponse>>(
+    `/admin/users/?${buildListParams(params)}`
+  );
+}
+
+export async function listInstructors(
+  params: ListUsersParams = {}
+): Promise<Page<AdminUserSummaryResponse>> {
+  return fetchAPI<Page<AdminUserSummaryResponse>>(
+    `/admin/users/instructors?${buildListParams(params)}`
+  );
+}
+
+export async function listUnallocatedLearners(
+  params: ListUsersParams = {}
+): Promise<Page<AdminUserSummaryResponse>> {
+  return fetchAPI<Page<AdminUserSummaryResponse>>(
+    `/admin/users/interns/unallocated?${buildListParams(params)}`
+  );
+}
+
+export async function getUser(
+  userId: string
+): Promise<AdminUserDetailResponse> {
   return fetchAPI<AdminUserDetailResponse>(`/admin/users/${userId}`);
 }
 
 export async function updateUserStatus(
   userId: string,
-  newStatus: UserStatus
+  status: UserStatus
 ): Promise<AdminUserDetailResponse> {
   return fetchAPI<AdminUserDetailResponse>(`/admin/users/${userId}/status`, {
     method: "PATCH",
-    body: JSON.stringify({ status: newStatus }),
+    body: JSON.stringify({ status }),
   });
 }
 
+/** The backend takes a single role, not an array. */
 export async function updateUserRoles(
   userId: string,
-  roleNames: RoleName[]
+  role: RoleName
 ): Promise<AdminUserDetailResponse> {
   return fetchAPI<AdminUserDetailResponse>(`/admin/users/${userId}/roles`, {
     method: "PATCH",
-    body: JSON.stringify({ roles: roleNames }),
+    body: JSON.stringify({ role }),
   });
 }
 
-export async function deactivateUser(userId: string): Promise<AdminUserDetailResponse> {
-  return fetchAPI<AdminUserDetailResponse>(`/admin/users/${userId}/deactivate`, {
-    method: "POST",
-  });
+export async function deactivateUser(
+  userId: string
+): Promise<AdminUserDetailResponse> {
+  return fetchAPI<AdminUserDetailResponse>(
+    `/admin/users/${userId}/deactivate`,
+    { method: "PATCH" }
+  );
 }
 
 export async function triggerPasswordReset(userId: string): Promise<void> {
-  return fetchAPI<void>(`/admin/users/${userId}/password-reset`, {
-    method: "POST",
-  });
+  await fetchAPI(`/admin/users/${userId}/password-reset`, { method: "POST" });
 }
 
 export async function onboardInstructor(
   request: CreateInstructorRequest
-): Promise<OnboardInstructorResponse> {
-  return fetchAPI<OnboardInstructorResponse>("/admin/users/instructors", {
+): Promise<OnboardUserResponse> {
+  return fetchAPI<OnboardUserResponse>("/admin/users/instructors", {
     method: "POST",
     body: JSON.stringify(request),
   });
 }
 
-export async function listInstructors(
-  query?: string,
-  status?: UserStatus,
-  page: number = 0,
-  size: number = 20,
-  sort?: string
-): Promise<PagedResponse<AdminUserSummaryResponse>> {
-  const params = new URLSearchParams({
-    page: page.toString(),
-    size: size.toString(),
+export async function onboardLearner(
+  request: CreateLearnerRequest
+): Promise<OnboardUserResponse> {
+  return fetchAPI<OnboardUserResponse>("/admin/users/learners", {
+    method: "POST",
+    body: JSON.stringify(request),
   });
-
-  if (query) params.append("query", query);
-  if (status) params.append("status", status);
-  if (sort) params.append("sort", sort);
-
-  return fetchAPI<PagedResponse<AdminUserSummaryResponse>>(`/admin/users/instructors?${params.toString()}`);
 }
 
 export async function createCohort(
@@ -177,6 +155,10 @@ export async function createCohort(
     method: "POST",
     body: JSON.stringify(request),
   });
+}
+
+export async function listCohorts(): Promise<CohortResponse[]> {
+  return fetchAPI<CohortResponse[]>("/admin/programs/all-cohorts");
 }
 
 export async function createProjectTeam(
@@ -192,56 +174,44 @@ export async function listAllProjectTeams(): Promise<ProjectTeamResponse[]> {
   return fetchAPI<ProjectTeamResponse[]>("/admin/programs/teams");
 }
 
+export async function listCohortTeams(
+  cohortId: string
+): Promise<ProjectTeamResponse[]> {
+  return fetchAPI<ProjectTeamResponse[]>(
+    `/admin/programs/cohorts/${cohortId}/teams`
+  );
+}
+
 export async function allocateUserToTeam(
   teamId: string,
   request: AllocateUserToTeamRequest
 ): Promise<TeamMemberResponse> {
-  return fetchAPI<TeamMemberResponse>(`/admin/programs/teams/${teamId}/members`, {
-    method: "POST",
-    body: JSON.stringify(request),
-  });
+  return fetchAPI<TeamMemberResponse>(
+    `/admin/programs/teams/${teamId}/members`,
+    {
+      method: "POST",
+      body: JSON.stringify(request),
+    }
+  );
 }
 
-export async function listCohortTeams(
-  cohortId: string
-): Promise<ProjectTeamResponse[]> {
-  return fetchAPI<ProjectTeamResponse[]>(`/admin/programs/cohorts/${cohortId}/teams`);
+export async function listTeamMembers(
+  teamId: string
+): Promise<TeamMemberResponse[]> {
+  return fetchAPI<TeamMemberResponse[]>(
+    `/admin/programs/teams/${teamId}/members`
+  );
 }
 
-export async function listCohorts(): Promise<CohortResponse[]> {
-  return fetchAPI<CohortResponse[]>("/admin/programs/all-cohorts");
+export async function autoAllocateLearners(
+  teamId: string
+): Promise<AutoAllocateTeamMembersResponse> {
+  return fetchAPI<AutoAllocateTeamMembersResponse>(
+    `/admin/programs/teams/${teamId}/members/auto-allocate`,
+    { method: "POST" }
+  );
 }
 
-export interface AutoAllocateResponse {
-  teamId: string;
-  allocatedCount: number;
-  maxTeamSize: number;
-  members: TeamMemberResponse[];
-}
-
-export async function autoAllocateInterns(teamId: string): Promise<AutoAllocateResponse> {
-  return fetchAPI<AutoAllocateResponse>(`/admin/programs/teams/${teamId}/members/auto-allocate`, {
-    method: "POST",
-  });
-}
-
-export async function listTeamMembers(teamId: string): Promise<TeamMemberResponse[]> {
-  return fetchAPI<TeamMemberResponse[]>(`/admin/programs/teams/${teamId}/members`);
-}
-
-export async function listUnallocatedInterns(
-  query?: string,
-  status?: UserStatus,
-  page: number = 0,
-  size: number = 20
-): Promise<PagedResponse<AdminUserSummaryResponse>> {
-  const params = new URLSearchParams({
-    page: page.toString(),
-    size: size.toString(),
-  });
-
-  if (query) params.append("query", query);
-  if (status) params.append("status", status);
-
-  return fetchAPI<PagedResponse<AdminUserSummaryResponse>>(`/admin/users/interns/unallocated?${params.toString()}`);
+export async function listAllocatedLearners(): Promise<TeamMemberResponse[]> {
+  return fetchAPI<TeamMemberResponse[]>("/admin/programs/allocated-interns");
 }

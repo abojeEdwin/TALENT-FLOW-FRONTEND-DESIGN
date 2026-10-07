@@ -1,3 +1,5 @@
+// The backend has no delete-conversation or delete-message endpoint.
+
 import { fetchAPI } from "./client";
 import {
   SearchUserResponse,
@@ -102,23 +104,6 @@ export async function removeParticipant(
   userId: string
 ): Promise<void> {
   return fetchAPI<void>(`/chat/conversations/${conversationId}/participants/${userId}`, {
-    method: "DELETE",
-  });
-}
-
-export async function deleteConversation(
-  conversationId: string
-): Promise<void> {
-  return fetchAPI<void>(`/chat/conversations/${conversationId}`, {
-    method: "DELETE",
-  });
-}
-
-export async function deleteMessage(
-  conversationId: string,
-  messageId: string
-): Promise<void> {
-  return fetchAPI<void>(`/chat/conversations/${conversationId}/messages/${messageId}`, {
     method: "DELETE",
   });
 }

@@ -36,7 +36,7 @@ import {
   LessonResponse, 
   LessonType 
 } from "@/lib/api/types";
-import { fetchCourseById, fetchCourseModules, createCourseModule, createLessonWithFile, createLesson } from "@/lib/api/courses";
+import { fetchInstructorCourseDetail, fetchCourseModules, createCourseModule, createLessonWithFile, createLesson } from "@/lib/api/courses";
 import { CreateModuleSchema, CreateLessonSchema, CreateModuleFormData, CreateLessonFormData } from "@/lib/schemas";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -71,9 +71,6 @@ function ModuleCard({
             <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
             <div>
               <CardTitle className="text-lg">{module.title}</CardTitle>
-              {module.description && (
-                <CardDescription className="mt-1">{module.description}</CardDescription>
-              )}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -116,10 +113,10 @@ function ModuleCard({
                   <span className="text-sm font-medium text-muted-foreground w-6">
                     {index + 1}.
                   </span>
-                  {getLessonIcon(lesson.type)}
+                  {getLessonIcon(lesson.lessonType)}
                   <div>
                     <p className="font-medium">{lesson.title}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{lesson.type?.toLowerCase() || 'lesson'}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{lesson.lessonType?.toLowerCase() || 'lesson'}</p>
                   </div>
                 </div>
                 <Button 
@@ -404,7 +401,7 @@ export default function CourseEditorPage() {
     try {
       setIsLoading(true);
       const [courseData, modulesData] = await Promise.all([
-        fetchCourseById(courseId),
+        fetchInstructorCourseDetail(courseId),
         fetchCourseModules(courseId),
       ]);
       
@@ -457,15 +454,15 @@ export default function CourseEditorPage() {
       newLesson = await createLessonWithFile(
         moduleId,
         data.title,
-        data.type,
+        data.type as LessonType,
         data.position || lessonsByModule[moduleId].length + 1,
         data.file
       );
     } else {
       newLesson = await createLesson(moduleId, {
         title: data.title,
-        type: data.type as LessonType,
-        content: data.content,
+        lessonType: data.type as LessonType,
+        contentText: data.content,
         position: data.position || lessonsByModule[moduleId].length + 1,
       });
     }
@@ -505,7 +502,7 @@ export default function CourseEditorPage() {
   return (
     <RoleGuard roles={["INSTRUCTOR"]}>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/dashboard/instructor/courses"
             className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -589,7 +586,7 @@ export default function CourseEditorPage() {
                 </div>
                 <div className="grid gap-2">
                   <Label>Description</Label>
-                  <Textarea value={course?.description} disabled />
+                  <Textarea value={course?.description ?? ""} disabled />
                 </div>
                 <div className="grid gap-2">
                   <Label>Status</Label>

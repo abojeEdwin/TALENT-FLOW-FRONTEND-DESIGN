@@ -1,29 +1,38 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchUsers, updateUserStatus, updateUserRoles } from "@/lib/api/users";
+import { listUsers, updateUserStatus, updateUserRoles } from "@/lib/api/admin";
 import { triggerPasswordReset } from "@/lib/api/admin";
 import { RoleGuard } from "@/components/shared/role-guard";
 import { StatusChip } from "@/components/shared/status-chip";
 import { EmptyState } from "@/components/shared/empty-state";
-import { UserListResponse, UserResponse, UserStatus, RoleName } from "@/lib/api/types";
+import { OnboardUserDialog } from "@/components/shared/onboard-user-dialog";
+import {
+  AdminUserSummaryResponse,
+  Page,
+  UserStatus,
+  RoleName,
+} from "@/lib/api/types";
 import { APIError } from "@/lib/api/client";
 import { toast } from "sonner";
 import { ROLE_DISPLAY_NAMES } from "@/lib/utils/constants";
+import { UserPlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<UserResponse[]>([]);
+  const [users, setUsers] = useState<AdminUserSummaryResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
   const [totalPages, setTotalPages] = useState(0);
-  const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null);
+  const [selectedUser, setSelectedUser] = useState<AdminUserSummaryResponse | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showOnboard, setShowOnboard] = useState(false);
 
   const loadUsers = async () => {
     setIsLoading(true);
     try {
-      const response = await fetchUsers(page, pageSize);
+      const response = await listUsers({ page, size: pageSize });
       setUsers(response.content);
       setTotalPages(response.totalPages);
     } catch (error) {
@@ -59,7 +68,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleRolesChange = async (userId: string, role: string) => {
+  const handleRolesChange = async (userId: string, role: RoleName) => {
     setIsUpdating(true);
     try {
       await updateUserRoles(userId, role);
@@ -78,12 +87,26 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <RoleGuard roles={[RoleName.ADMIN]}>
+    <RoleGuard roles={[RoleName.ORG_ADMIN]}>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="mt-2 text-gray-600">Manage system users, roles, and permissions</p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">User Management</h1>
+            <p className="mt-2 text-muted-foreground">
+              Manage your organisation's users, roles, and account status
+            </p>
+          </div>
+          <Button onClick={() => setShowOnboard(true)}>
+            <UserPlus className="w-4 h-4 mr-2" />
+            Onboard User
+          </Button>
         </div>
+
+        <OnboardUserDialog
+          open={showOnboard}
+          onOpenChange={setShowOnboard}
+          onSuccess={loadUsers}
+        />
 
         {isLoading ? (
           <div className="flex justify-center py-12">
@@ -96,7 +119,7 @@ export default function AdminUsersPage() {
           />
         ) : (
           <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-            <table className="w-full">
+            <table className="w-full min-w-[720px]">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
@@ -152,7 +175,7 @@ export default function AdminUsersPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button
               onClick={() => setPage(Math.max(0, page - 1))}
               disabled={page === 0}
@@ -216,7 +239,7 @@ export default function AdminUsersPage() {
                           value={role}
                           checked={selectedUser.role === role}
                           onChange={(e) => {
-                            handleRolesChange(selectedUser.id, e.target.value);
+                            handleRolesChange(selectedUser.id, e.target.value as RoleName);
                           }}
                           disabled={isUpdating}
                           className="rounded border-gray-300"

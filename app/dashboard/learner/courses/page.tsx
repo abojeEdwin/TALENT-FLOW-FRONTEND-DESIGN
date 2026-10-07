@@ -5,11 +5,11 @@ import { fetchPublishedCoursesWithCoverImages } from "@/lib/api/courses";
 import { RoleGuard } from "@/components/shared/role-guard";
 import { EmptyState } from "@/components/shared/empty-state";
 import { CourseResponse, RoleName } from "@/lib/api/types";
-import { COURSE_LEVELS } from "@/lib/utils/constants";
 import { APIError } from "@/lib/api/client";
 import { toast } from "sonner";
-import { Search, Filter, BookOpen, Clock, Play } from "lucide-react";
+import { Search, BookOpen, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -19,18 +19,12 @@ function BrowseCoursesContent() {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(12);
   const [totalPages, setTotalPages] = useState(0);
-  const [selectedLevel, setSelectedLevel] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
 
   const loadCourses = async () => {
     setIsLoading(true);
     try {
-      const response = await fetchPublishedCoursesWithCoverImages(
-        page,
-        pageSize,
-        selectedLevel || undefined,
-        undefined
-      );
+      const response = await fetchPublishedCoursesWithCoverImages();
       setCourses(response);
       setTotalPages(Math.ceil(response.length / pageSize));
     } catch (error) {
@@ -47,26 +41,11 @@ function BrowseCoursesContent() {
 
   useEffect(() => {
     loadCourses();
-  }, [page, pageSize, selectedLevel]);
+  }, [page, pageSize]);
 
   const filteredCourses = courses.filter(course => 
     course.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const getLevelBadgeClass = (level: string) => {
-    switch (level) {
-      case "Beginner":
-        return "bg-green-100 text-green-700";
-      case "Intermediate":
-        return "bg-blue-100 text-blue-700";
-      case "Advanced":
-        return "bg-purple-100 text-purple-700";
-      case "Expert":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -86,19 +65,6 @@ function BrowseCoursesContent() {
             className="w-full h-10 pl-10 pr-4 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring/20"
           />
         </div>
-        <select
-          value={selectedLevel}
-          onChange={(e) => {
-            setSelectedLevel(e.target.value);
-            setPage(0);
-          }}
-          className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring/20"
-        >
-          <option value="">All Levels</option>
-          {COURSE_LEVELS.map((level) => (
-            <option key={level} value={level}>{level}</option>
-          ))}
-        </select>
       </div>
 
       {isLoading ? (
@@ -121,7 +87,6 @@ function BrowseCoursesContent() {
           action={{
             label: "Clear Filters",
             onClick: () => {
-              setSelectedLevel("");
               setSearchQuery("");
             },
           }}
@@ -151,13 +116,7 @@ function BrowseCoursesContent() {
                 </div>
                 <div className="p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${getLevelBadgeClass(course.level || "")}`}>
-                      {course.level || "All Levels"}
-                    </span>
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      {course.duration || 0}h
-                    </span>
+                    <Badge variant="secondary">{course.status}</Badge>
                   </div>
                   <h3 className="font-semibold text-foreground mb-2 line-clamp-1">{course.title}</h3>
                   <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{course.description}</p>
@@ -200,7 +159,7 @@ function BrowseCoursesContent() {
 
 export default function LearnerCoursesPage() {
   return (
-    <RoleGuard roles={[RoleName.INTERN]}>
+    <RoleGuard roles={[RoleName.LEARNER]}>
       <BrowseCoursesContent />
     </RoleGuard>
   );

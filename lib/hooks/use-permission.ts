@@ -1,10 +1,14 @@
 import { useAuth } from "@/lib/context/auth-context";
+import { RoleName } from "@/lib/api/types";
 
-const PERMISSIONS: Record<string, string[]> = {
-  manageUsers: ["ADMIN"],
-  manageCourses: ["ADMIN", "INSTRUCTOR"],
-  viewAnalytics: ["ADMIN", "INSTRUCTOR"],
-  enrollCourse: ["INTERN"],
+const PERMISSIONS: Record<string, RoleName[]> = {
+  manageUsers: [RoleName.ORG_ADMIN, RoleName.SUPER_ADMIN],
+  manageCourses: [RoleName.ORG_ADMIN, RoleName.SUPER_ADMIN, RoleName.INSTRUCTOR],
+  managePrograms: [RoleName.ORG_ADMIN, RoleName.SUPER_ADMIN],
+  viewAnalytics: [RoleName.ORG_ADMIN, RoleName.SUPER_ADMIN, RoleName.INSTRUCTOR],
+  onboardUsers: [RoleName.ORG_ADMIN, RoleName.SUPER_ADMIN, RoleName.INSTRUCTOR],
+  manageTeams: [RoleName.ORG_ADMIN, RoleName.SUPER_ADMIN],
+  enrollCourse: [RoleName.LEARNER],
 };
 
 type PermissionKey = keyof typeof PERMISSIONS;

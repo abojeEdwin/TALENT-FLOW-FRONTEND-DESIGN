@@ -29,7 +29,7 @@ function AdminCoursesContent() {
   const loadCourses = async () => {
     try {
       setIsLoading(true);
-      const response: CourseResponse[] = await fetchAdminCourses(filter);
+      const response: CourseResponse[] = await fetchAdminCourses();
       setCourses(response || []);
     } catch (error) {
       if (error instanceof APIError) {
@@ -104,7 +104,7 @@ function AdminCoursesContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Course Management</h1>
           <p className="text-muted-foreground">Manage course visibility and status</p>
@@ -254,7 +254,7 @@ function AdminCoursesContent() {
 
 export default function AdminCoursesPage() {
   return (
-    <RoleGuard roles={[RoleName.ADMIN]}>
+    <RoleGuard roles={[RoleName.ORG_ADMIN]}>
       <AdminCoursesContent />
     </RoleGuard>
   );

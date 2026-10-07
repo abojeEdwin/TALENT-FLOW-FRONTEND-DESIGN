@@ -10,7 +10,7 @@ import { BookOpen, Users, TrendingUp, Award, Plus } from 'lucide-react';
 import { RoleGuard } from '@/components/shared/role-guard';
 import { RoleName } from '@/lib/api/types';
 import { fetchInstructorCourses } from '@/lib/api/courses';
-import { CourseListResponse, CourseResponse } from '@/lib/api/types';
+import { CourseResponse } from '@/lib/api/types';
 import { APIError } from '@/lib/api/client';
 import { toast } from 'sonner';
 
@@ -23,7 +23,11 @@ export default function InstructorDashboard() {
     const loadCourses = async () => {
       try {
         const response: CourseResponse[] = await fetchInstructorCourses();
-        setCourses(response || []);
+        // Backend may return a paginated object or a plain array — handle both
+        const courseList = Array.isArray(response)
+          ? response
+          : (response as any)?.content ?? [];
+        setCourses(courseList);
       } catch (error) {
         if (error instanceof APIError) {
           toast.error(error.message);

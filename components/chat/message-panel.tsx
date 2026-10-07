@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
-import { ChevronLeft, MoreVertical, Users, CheckCheck, Trash2 } from "lucide-react";
+import { ChevronLeft, MoreVertical, Users, CheckCheck } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,10 +22,9 @@ interface MessageBubbleProps {
   isOwn: boolean;
   onReply: (message: MessageResponse) => void;
   onShowReceipts: (messageId: string) => void;
-  onDelete: (messageId: string) => void;
 }
 
-function MessageBubble({ message, isOwn, onReply, onShowReceipts, onDelete }: MessageBubbleProps) {
+function MessageBubble({ message, isOwn, onReply, onShowReceipts }: MessageBubbleProps) {
   const formatTime = (dateString: string) => {
     return format(new Date(dateString), "h:mm a");
   };
@@ -57,16 +56,6 @@ function MessageBubble({ message, isOwn, onReply, onShowReceipts, onDelete }: Me
           >
             {message.content}
           </div>
-          {isOwn && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute -top-1 -right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => onDelete(message.id)}
-            >
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          )}
         </div>
         <div className={`flex items-center gap-2 mt-1 ${isOwn ? "flex-row-reverse" : "flex-row"}`}>
           {message.isRead && isOwn && (
@@ -128,17 +117,11 @@ export function MessagePanel({
   onBack,
 }: MessagePanelProps) {
   const { user } = useAuth();
-  const { state, fetchMessages, fetchConversations, deleteMessage } = useChat();
+  const { state, fetchMessages, fetchConversations } = useChat();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [replyTo, setReplyTo] = useState<MessageResponse | null>(null);
 
   const { currentConversation, messages, activeTypers, isLoadingMessages } = state;
-
-  const handleDelete = async (messageId: string) => {
-    if (confirm("Delete this message?")) {
-      await deleteMessage(messageId);
-    }
-  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -228,7 +211,6 @@ export function MessagePanel({
                 isOwn={message.sender.id === user?.id}
                 onReply={handleReply}
                 onShowReceipts={onShowReceipts}
-                onDelete={handleDelete}
               />
             ))}
             <TypingIndicator users={otherTypers} />
