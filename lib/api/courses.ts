@@ -217,9 +217,17 @@ export async function createCourseModule(
 export async function fetchCourseModules(
   courseId: string
 ): Promise<CourseModuleResponse[]> {
-  return fetchAPI<CourseModuleResponse[]>(
+  const result = await fetchAPI<CourseModuleResponse[] | { content: CourseModuleResponse[] }>(
     `/instructor/courses/${courseId}/modules`
   );
+  // Backend may return a Spring Page wrapper or a bare array
+  if (Array.isArray(result)) {
+    return result;
+  }
+  if (result && Array.isArray((result as { content: CourseModuleResponse[] }).content)) {
+    return (result as { content: CourseModuleResponse[] }).content;
+  }
+  return [];
 }
 
 export async function updateCourseModule(
