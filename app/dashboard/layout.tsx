@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/lib/context/auth-context";
 import { NotificationProvider } from "@/lib/context/notification-context";
+import { ChatProvider } from "@/lib/context/chat-context";
 import { useRouter } from "next/navigation";
 import { NavSidebar, NavSidebarContent } from "@/components/shared/nav-sidebar";
 import { UserProfileMenu } from "@/components/shared/user-profile-menu";
@@ -41,6 +42,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <NotificationProvider>
+      <ChatProvider>
       <div className="flex min-h-screen bg-background">
         <NavSidebar />
 
@@ -89,6 +91,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <main className="p-4 md:p-6">{children}</main>
         </div>
       </div>
+      </ChatProvider>
     </NotificationProvider>
   );
 }

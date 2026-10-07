@@ -14,15 +14,6 @@ import {
   clearAllNotifications,
 } from "@/lib/api/notifications";
 
-interface ChatMessageNotificationPayload {
-  conversationId: string;
-  messageId: string;
-  senderId: string;
-  senderName: string;
-  chatType: "DIRECT" | "FREE_GROUP" | "COHORT_CHAT" | "TEAM_CHAT";
-  preview: string;
-}
-
 interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
@@ -122,8 +113,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     try {
       setIsLoading(true);
       const response = await getNotifications(0, 50);
-      setNotifications(response.data);
-      setUnreadCount(response.unreadCount);
+      // Exclude chat message notifications — those are handled by the chat sidebar
+      const filtered = response.data.filter(
+        (n) => n.type !== "CHAT_MESSAGE_RECEIVED"
+      );
+      const unread = filtered.filter((n) => !n.read).length;
+      setNotifications(filtered);
+      setUnreadCount(unread);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
     } finally {
@@ -136,40 +132,32 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     toast.success(`${icon} ${notification.title}`, {
       description: notification.message,
       duration: 5000,
-      action: notification.type === "CHAT_MESSAGE_RECEIVED" ? {
-        label: "View",
-        onClick: () => {
-          const payload = notification.payload as ChatMessageNotificationPayload | undefined;
-          if (payload?.conversationId) {
-            router.push(`/dashboard/chat?conversationId=${payload.conversationId}`);
-          }
-        },
-      } : undefined,
     });
-  }, [router]);
+  }, []);
 
   const handleNotificationMessage = useCallback((message: WebSocketMessage) => {
     const payload = message?.payload as Record<string, unknown> || message;
 
     if (payload && (payload.type || payload.title)) {
       const type = payload.type as string;
-      
-      if (type !== "CHAT_MESSAGE_RECEIVED") {
+
+      // Chat messages have their own badge in the sidebar — skip them here
+      if (type === "CHAT_MESSAGE_RECEIVED") {
         return;
       }
-      
+
       const notificationId = payload.id as string;
-      
+
       setNotifications((prev) => {
         const exists = prev.some((n) => n.id === notificationId);
         if (exists) return prev;
-        
+
         const uid = (payload.userId as string) || userIdRef.current || "current-user";
         const notification = createNotificationFromPayload(payload, uid);
-        
+
         setUnreadCount((count) => count + 1);
         showToast(notification);
-        
+
         const merged = [notification, ...prev];
         const unique = Array.from(
           new Map(merged.map((n) => [n.id, n])).values()
@@ -216,12 +204,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const onNotificationClick = useCallback(async (notification: Notification) => {
     if (notification.type === "CHAT_MESSAGE_RECEIVED") {
-      const payload = notification.payload as ChatMessageNotificationPayload | undefined;
+      const payload = notification.payload as { conversationId?: string } | undefined;
       if (payload?.conversationId) {
         router.push(`/dashboard/chat?conversationId=${payload.conversationId}`);
       }
     }
-    
+
     if (!notification.read) {
       await markAsRead(notification.id);
     }

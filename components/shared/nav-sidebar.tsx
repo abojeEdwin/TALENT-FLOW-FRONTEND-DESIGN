@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/context/auth-context";
-import { useNotifications } from "@/lib/context/notification-context";
+import { useChat } from "@/lib/context/chat-context";
 import {
   ADMIN_MENU_ITEMS,
   INSTRUCTOR_MENU_ITEMS,
@@ -49,7 +49,11 @@ interface NavSidebarContentProps {
 export function NavSidebarContent({ onNavigate }: NavSidebarContentProps) {
   const pathname = usePathname();
   const { user, hasRole } = useAuth();
-  const { unreadCount } = useNotifications();
+  const { state: chatState } = useChat();
+
+  // Sum unread counts across all conversations for the Messages badge
+  const chatUnreadCount = Object.values(chatState.unreadCounts).reduce((sum, n) => sum + n, 0)
+    || chatState.conversations.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0);
 
   let menuItems = [...SHARED_MENU_ITEMS];
 
@@ -85,7 +89,7 @@ export function NavSidebarContent({ onNavigate }: NavSidebarContentProps) {
           const isActive = pathname.startsWith(item.href);
           const Icon = getIconForLabel(item.label);
           const isMessages = item.label.toLowerCase().includes("message");
-          const badgeCount = isMessages ? unreadCount : 0;
+          const badgeCount = isMessages ? chatUnreadCount : 0;
 
           return (
             <Link

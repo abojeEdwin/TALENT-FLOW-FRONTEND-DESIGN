@@ -2,10 +2,10 @@
 
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { ChatProvider, useChat } from "@/lib/context/chat-context";
+import { useChat } from "@/lib/context/chat-context";
 import { ChatLayout } from "@/components/chat/chat-layout";
 
-function ChatPageContent() {
+export default function ChatPage() {
   const searchParams = useSearchParams();
   const { state, setCurrentConversation } = useChat();
   const conversationId = searchParams.get('conversationId');
@@ -23,13 +23,5 @@ function ChatPageContent() {
     <div className="h-full">
       <ChatLayout />
     </div>
-  );
-}
-
-export default function ChatPage() {
-  return (
-    <ChatProvider>
-      <ChatPageContent />
-    </ChatProvider>
   );
 }
