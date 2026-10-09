@@ -57,7 +57,7 @@ export function NavSidebarContent({ onNavigate }: NavSidebarContentProps) {
 
   let menuItems = [...SHARED_MENU_ITEMS];
 
-  if (hasRole(RoleName.ORG_ADMIN)) {
+  if (hasRole(RoleName.ORG_ADMIN) || hasRole(RoleName.SUPER_ADMIN)) {
     menuItems = [...ADMIN_MENU_ITEMS, ...menuItems];
   } else if (hasRole(RoleName.INSTRUCTOR)) {
     menuItems = [...INSTRUCTOR_MENU_ITEMS, ...menuItems];

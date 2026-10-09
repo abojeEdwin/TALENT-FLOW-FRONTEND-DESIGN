@@ -254,7 +254,7 @@ function AdminCoursesContent() {
 
 export default function AdminCoursesPage() {
   return (
-    <RoleGuard roles={[RoleName.ORG_ADMIN]}>
+    <RoleGuard roles={[RoleName.ORG_ADMIN, RoleName.SUPER_ADMIN]}>
       <AdminCoursesContent />
     </RoleGuard>
   );

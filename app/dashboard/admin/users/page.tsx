@@ -87,7 +87,7 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <RoleGuard roles={[RoleName.ORG_ADMIN]}>
+    <RoleGuard roles={[RoleName.ORG_ADMIN, RoleName.SUPER_ADMIN]}>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>

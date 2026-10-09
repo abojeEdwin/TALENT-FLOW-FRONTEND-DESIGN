@@ -28,7 +28,9 @@ function CourseDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
   useEffect(() => {
     const loadCourse = async () => {
       try {
+        console.log('[CourseDetail] Fetching course:', courseId);
         const data = await fetchCourseDetail(courseId);
+        console.log('[CourseDetail] Fetched course data:', data);
         setCourse(data);
         
         if (data.coverImageUrl) {
@@ -36,6 +38,7 @@ function CourseDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
             const presignedUrl = await fetchCourseCoverImagePresignedUrl(courseId);
             setCoverImageUrl(presignedUrl);
           } catch (err) {
+            console.warn('[CourseDetail] Failed to fetch presigned URL:', err);
             setCoverImageUrl(data.coverImageUrl || null);
           }
         }
@@ -44,6 +47,7 @@ function CourseDetailContent({ paramsPromise }: { paramsPromise: Promise<{ id: s
           setExpandedModules(new Set(data.modules.map((m: { id: string }) => m.id)));
         }
       } catch (error) {
+        console.error('[CourseDetail] Failed to load course:', error);
         if (error instanceof APIError) {
           toast.error(error.message);
         } else {

@@ -11,7 +11,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
-      if (hasRole(RoleName.ORG_ADMIN)) {
+      if (hasRole(RoleName.ORG_ADMIN) || hasRole(RoleName.SUPER_ADMIN)) {
         router.push("/dashboard/admin/users");
       } else if (hasRole(RoleName.INSTRUCTOR)) {
         router.push("/dashboard/instructor/courses");
