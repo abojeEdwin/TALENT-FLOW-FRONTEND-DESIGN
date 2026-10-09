@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { RoleGuard } from '@/components/shared/role-guard';
+import { RoleName } from '@/lib/api/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -38,7 +40,8 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
 
   return (
-    <div className="space-y-8">
+    <RoleGuard roles={[RoleName.ORG_ADMIN, RoleName.SUPER_ADMIN]}>
+      <div className="space-y-8">
       {/* Welcome Section */}
       <div>
         <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
@@ -236,5 +239,6 @@ export default function AdminDashboard() {
         </TabsContent>
       </Tabs>
     </div>
+    </RoleGuard>
   );
 }

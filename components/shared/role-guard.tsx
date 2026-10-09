@@ -24,6 +24,12 @@ export function RoleGuard({
     );
   }
 
+  // Debug logging
+  console.log('[RoleGuard] User:', user);
+  console.log('[RoleGuard] User role:', user?.role);
+  console.log('[RoleGuard] Allowed roles:', roles);
+  console.log('[RoleGuard] Role check:', user ? roles.includes(user.role) : 'no user');
+
   if (!user || !roles.includes(user.role)) {
     return fallback;
   }
