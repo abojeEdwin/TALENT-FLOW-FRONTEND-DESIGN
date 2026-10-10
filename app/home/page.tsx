@@ -36,45 +36,39 @@ function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 lg:px-6">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/home" className="flex items-center gap-3">
+          <Link href="/home" className="flex items-center gap-2">
             <img 
-              alt="TrailForge"
-              loading="lazy"
-              width="40"
-              height="40"
-              decoding="async"
-              data-nimg="1"
-              className="w-[40px] rounded-md dark:bg-background/90"
-              src="/logo.png"
+              src="/logo.png" 
+              alt="TrailForge" 
+              className="w-10 h-10 rounded-lg"
             />
-            <h4 className="ml-2 text-2xl font-bold leading-5 text-foreground dark:text-white right2" style={{position: "relative"}}>TrailForge</h4>
+            <span className="text-xl font-bold">TrailForge.</span>
           </Link>
           
           <div className="hidden md:flex items-center gap-8">
-            <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+            <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Features
             </Link>
-            <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+            <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               How It Works
             </Link>
-            <Link href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+            <Link href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Testimonials
             </Link>
           </div>
           
-          <div className="hidden md:flex items-center gap-4">
-            <ThemeToggle />
+          <div className="hidden md:flex items-center gap-3">
             <Link 
               href="/auth/login" 
-              className="text-sm font-medium text-muted-foreground hover:text-foreground"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground px-4 py-2"
             >
               Sign In
             </Link>
             <Link 
               href="/register" 
-              className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-transparent px-4 py-2 text-sm font-medium text-foreground hover:bg-foreground/10"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
             >
               Register Organisation
               <ArrowRight className="w-4 h-4" />
@@ -82,10 +76,10 @@ function Navbar() {
           </div>
 
           <div className="flex items-center gap-2 md:hidden">
-            <ThemeToggle />
             <button 
               className="p-2"
               onClick={() => setIsOpen(!isOpen)}
+              aria-label="Toggle menu"
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -112,7 +106,7 @@ function Navbar() {
               </Link>
               <Link 
                 href="/register" 
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-transparent px-4 py-2 text-sm font-medium text-foreground hover:bg-foreground/10"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
               >
                 Register Organisation
                 <ArrowRight className="w-4 h-4" />
@@ -127,51 +121,49 @@ function Navbar() {
 
 function Hero() {
   return (
-    <header className="relative h-[75vh] min-h-[560px] w-full overflow-hidden mt-16 rounded-3xl">
-      <video 
-        className="absolute inset-0 h-full w-full object-cover"
-        autoPlay 
-        loop 
-        muted 
-        playsInline
-      >
-        <source src="/hero-Cover.mp4" type="video/mp4" />
-      </video>
-      <div className="absolute inset-0 bg-black/40"></div>
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60"></div>
-      <div className="relative z-10 flex h-full items-center justify-center px-6">
-        <div className="mx-auto max-w-4xl text-center text-white">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur px-4 py-1.5 text-sm font-medium mb-8">
-            <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-            Now enrolling for Spring 2026
+    <section className="relative mt-16 overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 dark:from-emerald-950/20 dark:via-teal-950/20 dark:to-green-950/20">
+      <div className="container mx-auto px-4 lg:px-6">
+        <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[600px] py-12 lg:py-20">
+          {/* Left Content */}
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                Empower Your Team with{" "}
+                <span className="text-emerald-600 dark:text-emerald-400">Modern Learning</span>
+              </h1>
+              
+              <p className="text-lg text-muted-foreground max-w-lg">
+                Transform your workforce with TrailForge - the comprehensive learning 
+                management system designed for modern organizations.
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <Link 
+                href="/register" 
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 px-6 py-3 text-base font-semibold text-white transition-colors shadow-lg shadow-emerald-600/20"
+              >
+                Register Your Organisation
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <button className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 px-6 py-3 text-base font-medium transition-colors">
+                <Play className="w-4 h-4" />
+                Watch Demo
+              </button>
+            </div>
           </div>
-          
-          <h1 className="text-4xl font-extrabold leading-tight md:text-6xl mb-6">
-            Empower Your Team with{" "}
-            <span className="text-white drop-shadow-lg">Modern Learning</span>
-          </h1>
-          
-          <p className="mx-auto mt-4 max-w-3xl text-base text-zinc-200 sm:text-lg">
-            Transform your workforce with TrailForge - the comprehensive learning 
-            management system designed for modern organizations.
-          </p>
-          
-          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link 
-              href="/register" 
-              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-8 py-3 text-lg font-semibold text-primary-foreground hover:bg-primary/90"
-            >
-              Register Your Organisation
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <button className="inline-flex items-center justify-center gap-2 rounded-md border border-white/20 bg-white/10 backdrop-blur px-8 py-3 text-lg font-semibold text-white hover:bg-white/20">
-              <Play className="w-4 h-4" />
-              Watch Demo
-            </button>
+
+          {/* Right Image */}
+          <div className="relative lg:h-[500px] rounded-2xl overflow-hidden shadow-2xl">
+            <img 
+              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80" 
+              alt="Students collaborating" 
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
       </div>
-    </header>
+    </section>
   );
 }
 
@@ -210,7 +202,7 @@ function Features() {
   ];
 
   return (
-    <section id="features" className="py-20 px-4 bg-muted/50">
+    <section id="features" className="py-20 px-4 lg:px-6 bg-muted/50">
       <div className="container mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -226,7 +218,7 @@ function Features() {
           {features.map((feature, index) => (
             <div 
               key={index}
-              className="bg-background rounded-xl p-6 border shadow-sm"
+              className="bg-background rounded-xl p-6 border shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                 <feature.icon className="w-6 h-6 text-primary" />
@@ -266,7 +258,7 @@ function HowItWorks() {
   ];
 
   return (
-    <section id="how-it-works" className="py-20 px-4">
+    <section id="how-it-works" className="py-20 px-4 lg:px-6">
       <div className="container mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -280,7 +272,7 @@ function HowItWorks() {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
           {steps.map((step, index) => (
             <div key={index} className="relative">
-              <div className="text-6xl font-bold text-primary/10 mb-4">
+              <div className="text-6xl font-bold text-emerald-100 dark:text-emerald-900/20 mb-4">
                 {step.number}
               </div>
               <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
@@ -298,23 +290,30 @@ function HowItWorks() {
 
 function Testimonials() {
   return (
-    <section id="testimonials" className="py-20 px-4:bg-[#1f2937]">
+    <section id="testimonials" className="py-20 px-4 lg:px-6 bg-muted/30">
       <div className="container mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-white">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Loved by Teams Everywhere
           </h2>
-          <p className="text-lg text-gray-600 dark:text-white/70 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             See what our customers have to say about their experience with TrailForge.
           </p>
         </div>
         
-        <div className="max-w-4xl mx-auto">
-          <blockquote className="transition-opacity duration-500 opacity-100">
-            <p className="text-gray-700 dark:text-white/90 text-[1.05rem] leading-7 md:pr-8">"Since implementing TrailForge, we've reduced training costs by 40% while increasing intern productivity by 65%. The platform's seamless integration with our existing tools made onboarding effortless."</p>
-            <div className="mt-4">
-              <span className="font-semibold text-gray-900 dark:text-white">Chike Lazarus</span>
-              <div className="text-sm text-gray-600 dark:text-white/70">CEO, NexusAcademy</div>
+        <div className="max-w-4xl mx-auto bg-white dark:bg-card rounded-2xl p-8 md:p-12 shadow-sm border">
+          <blockquote className="space-y-6">
+            <p className="text-lg md:text-xl leading-relaxed">
+              "Since implementing TrailForge, we've reduced training costs by 40% while increasing intern productivity by 65%. The platform's seamless integration with our existing tools made onboarding effortless."
+            </p>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
+                <span className="text-emerald-600 font-semibold text-lg">CL</span>
+              </div>
+              <div>
+                <div className="font-semibold">Chike Lazarus</div>
+                <div className="text-sm text-muted-foreground">CEO, NexusAcademy</div>
+              </div>
             </div>
           </blockquote>
         </div>
@@ -325,39 +324,31 @@ function Testimonials() {
 
 function CTASection() {
   return (
-    <section className="py-20 px-4">
+    <section className="py-20 px-4 lg:px-6">
       <div className="container mx-auto">
-        <div className="bg-black rounded-2xl p-8 md:p-16 text-center text-white relative overflow-hidden">
-          <img 
-            alt="waves" 
-            fetchPriority="high" 
-            decoding="async" 
-            data-nimg="fill" 
-            className="pointer-events-none select-none object-cover opacity-10" 
-            src="https://firebasestorage.googleapis.com/v0/b/techx-57646.appspot.com/o/Assets%2Fimg%2Fwaves-white.svg?alt=media&token=a8ae5adf-0a53-4afa-86ff-5cce49638cb4"
-            style={{position: "absolute", height: "100%", width: "100%", inset: "0px", color: "transparent"}}
-          />
-          <div className="relative z-10">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+        <div className="bg-emerald-600 rounded-2xl p-8 md:p-16 text-center text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-600 opacity-90" />
+          <div className="relative z-10 space-y-6">
+            <h2 className="text-3xl md:text-4xl font-bold">
               Ready to Transform Your Team?
             </h2>
-            <p className="text-lg opacity-90 max-w-2xl mx-auto mb-8">
+            <p className="text-lg opacity-90 max-w-2xl mx-auto">
               Join thousands of organizations already using TrailForge to power their 
               learning and development programs.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link 
                 href="/register" 
-                className="inline-flex items-center justify-center gap-2 rounded-md bg-white px-8 py-3 text-base font-medium text-black hover:bg-white/90"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-8 py-3 text-base font-semibold text-emerald-600 hover:bg-emerald-50 transition-colors shadow-lg"
               >
                 Register Your Organisation
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <button className="inline-flex items-center justify-center gap-2 rounded-md border-2 border-white px-8 py-3 text-base font-medium text-white hover:bg-white/10">
+              <button className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-white px-8 py-3 text-base font-medium text-white hover:bg-white/10 transition-colors">
                 Contact Sales
               </button>
             </div>
-            <div className="flex items-center justify-center gap-8 mt-8 text-sm opacity-80">
+            <div className="flex flex-wrap items-center justify-center gap-6 mt-8 text-sm opacity-90">
               <span className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
                 No credit card required
@@ -380,54 +371,49 @@ function CTASection() {
 
 function Footer() {
   return (
-    <footer className="border-t py-12 px-4">
+    <footer className="border-t py-12 px-4 lg:px-6">
       <div className="container mx-auto">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div>
-            <Link href="/" className="flex items-center gap-3 mb-4">
+            <Link href="/" className="flex items-center gap-2 mb-4">
               <img 
-                alt="TrailForge"
-                loading="lazy"
-                width="40"
-                height="40"
-                decoding="async"
-                data-nimg="1"
-                className="w-[40px] rounded-md"
-                src="/logo.png"
+                src="/logo.png" 
+                alt="TrailForge" 
+                className="w-10 h-10 rounded-lg"
               />
-              <h5 className="ml-2 text-2xl font-bold leading-5 text-foreground dark:text-white right2" style={{position: "relative"}}>TrailForge</h5>
+              <span className="text-xl font-bold">TrailForge.</span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              
+              Empowering teams through modern learning experiences.
             </p>
           </div>
           
           <div>
             <h4 className="font-semibold mb-4">Product</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="#features" className="hover:text-foreground">Features</Link></li>
-              <li><Link href="#how-it-works" className="hover:text-foreground">How It Works</Link></li>
-              <li><Link href="#testimonials" className="hover:text-foreground">Testimonials</Link></li>
-              <li><Link href="#" className="hover:text-foreground">Pricing</Link></li>
+              <li><Link href="#features" className="hover:text-foreground transition-colors">Features</Link></li>
+              <li><Link href="#how-it-works" className="hover:text-foreground transition-colors">How It Works</Link></li>
+              <li><Link href="#testimonials" className="hover:text-foreground transition-colors">Testimonials</Link></li>
+              <li><Link href="#" className="hover:text-foreground transition-colors">Pricing</Link></li>
             </ul>
           </div>
           
           <div>
             <h4 className="font-semibold mb-4">Company</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="#" className="hover:text-foreground">About Us</Link></li>
-              <li><Link href="#" className="hover:text-foreground">Careers</Link></li>
-              <li><Link href="#" className="hover:text-foreground">Blog</Link></li>
-              <li><Link href="#" className="hover:text-foreground">Contact</Link></li>
+              <li><Link href="#" className="hover:text-foreground transition-colors">About Us</Link></li>
+              <li><Link href="#" className="hover:text-foreground transition-colors">Careers</Link></li>
+              <li><Link href="#" className="hover:text-foreground transition-colors">Blog</Link></li>
+              <li><Link href="#" className="hover:text-foreground transition-colors">Contact</Link></li>
             </ul>
           </div>
           
           <div>
             <h4 className="font-semibold mb-4">Legal</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="#" className="hover:text-foreground">Privacy Policy</Link></li>
-              <li><Link href="#" className="hover:text-foreground">Terms of Service</Link></li>
-              <li><Link href="#" className="hover:text-foreground">Cookie Policy</Link></li>
+              <li><Link href="#" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
+              <li><Link href="#" className="hover:text-foreground transition-colors">Terms of Service</Link></li>
+              <li><Link href="#" className="hover:text-foreground transition-colors">Cookie Policy</Link></li>
             </ul>
           </div>
         </div>
