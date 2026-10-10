@@ -14,10 +14,7 @@ import {
   Play,
   UserCog,
   Menu,
-  X,
-  Sparkles,
-  Target,
-  BookOpen
+  X
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -26,7 +23,6 @@ export default function LandingPage() {
       <Navbar />
       <Hero />
       <Features />
-      <CoursesPreview />
       <HowItWorks />
       <Testimonials />
       <CTASection />
@@ -43,19 +39,23 @@ function Navbar() {
       <div className="container mx-auto px-4 lg:px-6">
         <div className="flex h-16 items-center justify-between">
           <Link href="/home" className="flex items-center gap-2">
-            <GraduationCap className="w-8 h-8 text-primary" />
+            <img 
+              src="/logo.png" 
+              alt="TrailForge" 
+              className="w-10 h-10 rounded-lg"
+            />
             <span className="text-xl font-bold">TrailForge.</span>
           </Link>
           
           <div className="hidden md:flex items-center gap-8">
             <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Why TrailForge
-            </Link>
-            <Link href="#courses" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              Explore courses
+              Features
             </Link>
             <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              How it works
+              How It Works
+            </Link>
+            <Link href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Testimonials
             </Link>
           </div>
           
@@ -64,13 +64,13 @@ function Navbar() {
               href="/auth/login" 
               className="text-sm font-medium text-muted-foreground hover:text-foreground px-4 py-2"
             >
-              Learner demo
+              Sign In
             </Link>
             <Link 
               href="/register" 
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
             >
-              Explore learning
+              Register Organisation
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -90,25 +90,25 @@ function Navbar() {
           <div className="md:hidden py-4 border-t">
             <div className="flex flex-col space-y-4">
               <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground" onClick={() => setIsOpen(false)}>
-                Why TrailForge
-              </Link>
-              <Link href="#courses" className="text-sm font-medium text-muted-foreground hover:text-foreground" onClick={() => setIsOpen(false)}>
-                Explore courses
+                Features
               </Link>
               <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground" onClick={() => setIsOpen(false)}>
-                How it works
+                How It Works
+              </Link>
+              <Link href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground" onClick={() => setIsOpen(false)}>
+                Testimonials
               </Link>
               <Link 
                 href="/auth/login" 
                 className="text-sm font-medium text-muted-foreground hover:text-foreground"
               >
-                Learner demo
+                Sign In
               </Link>
               <Link 
                 href="/register" 
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
               >
-                Explore learning
+                Register Organisation
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -126,47 +126,30 @@ function Hero() {
         <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[600px] py-12 lg:py-20">
           {/* Left Content */}
           <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 dark:border-emerald-800 bg-white/80 dark:bg-emerald-950/50 backdrop-blur px-4 py-1.5 text-sm font-medium">
-              <Sparkles className="w-4 h-4 text-emerald-600" />
-              <span className="text-emerald-900 dark:text-emerald-100">A LITTLE CURIOSITY. A LOT OF POSSIBILITY.</span>
-            </div>
-            
             <div className="space-y-4">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                TrailForge.
-                <br />
-                <span className="text-emerald-600 dark:text-emerald-400">Your next chapter.</span>
+                Empower Your Team with{" "}
+                <span className="text-emerald-600 dark:text-emerald-400">Modern Learning</span>
               </h1>
               
               <p className="text-lg text-muted-foreground max-w-lg">
-                Build real-world skills, one meaningful lesson at a time. A clearer path 
-                from where you are to where you want to be.
+                Transform your workforce with TrailForge - the comprehensive learning 
+                management system designed for modern organizations.
               </p>
             </div>
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <Link 
-                href="/dashboard/learner/courses" 
+                href="/register" 
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 px-6 py-3 text-base font-semibold text-white transition-colors shadow-lg shadow-emerald-600/20"
               >
-                Find your next course
+                Register Your Organisation
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <button className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 px-6 py-3 text-base font-medium transition-colors">
                 <Play className="w-4 h-4" />
-                Take a look inside
+                Watch Demo
               </button>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
-              <span className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                Learn at your pace
-              </span>
-              <span className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                Put your skills to work
-              </span>
             </div>
           </div>
 
@@ -187,178 +170,64 @@ function Hero() {
 function Features() {
   const features = [
     {
-      icon: Target,
-      title: "A clear place to start",
-      description: "Find courses that match your interests with a clear syllabus of what you'll learn.",
+      icon: GraduationCap,
+      title: "Expert-Led Courses",
+      description: "Access courses created by industry experts with real-world experience.",
+    },
+    {
+      icon: UserCog,
+      title: "Team Management",
+      description: "Admin easily manage learners, instructors, and track team progress.",
     },
     {
       icon: BarChart3,
-      title: "Progress you can feel",
-      description: "Pick up where you left off and turn small steps into steady momentum.",
+      title: "Advanced Analytics",
+      description: "Gain insights with comprehensive reporting and progress tracking.",
     },
     {
-      icon: BookOpen,
-      title: "Room to really learn",
-      description: "A focused backup experience that keeps the rest step within easy reach.",
+      icon: Users,
+      title: "Cross-Functional Collaboration",
+      description: "Enable seamless cross-functional collaboration across 50+ interns from diverse disciplines.",
+    },
+    {
+      icon: Plug,
+      title: "Integration",
+      description: "The LMS integrates with external tools such as Zoom, Google Drive, Slack, and Email systems.",
+    },
+    {
+      icon: Award,
+      title: "Certifications",
+      description: "Earn recognized certifications upon course completion.",
     },
   ];
 
   return (
-    <section id="features" className="py-20 px-4 lg:px-6">
+    <section id="features" className="py-20 px-4 lg:px-6 bg-muted/50">
       <div className="container mx-auto">
-        <div className="mb-16">
-          <p className="text-sm font-semibold text-emerald-600 uppercase tracking-wider mb-4">LESS FRICTION. MORE FORWARD.</p>
-          <h2 className="text-3xl md:text-4xl font-bold max-w-xl">
-            Learning that fits your life.
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Everything You Need to Succeed
           </h2>
-          <p className="text-lg text-muted-foreground mt-4 max-w-2xl">
-            A thoughtful space to get curious, stay focused, and keep growing.
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Powerful features designed to enhance learning outcomes and streamline 
+            your training programs.
           </p>
         </div>
         
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {features.map((feature, index) => (
             <div 
               key={index}
-              className="space-y-4"
+              className="bg-background rounded-xl p-6 border shadow-sm hover:shadow-md transition-shadow"
             >
-              <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
-                <feature.icon className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                <feature.icon className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold">{feature.title}</h3>
+              <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
               <p className="text-muted-foreground">{feature.description}</p>
             </div>
           ))}
         </div>
-      </div>
-    </section>
-  );
-}
-
-function CoursesPreview() {
-  const courses = [
-    {
-      id: 1,
-      title: "UI/UX Design Fundamentals",
-      instructor: "Sarah Johnson",
-      category: "Design",
-      rating: 4.8,
-      students: 1234,
-      duration: "24 lessons",
-      image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=600&q=80",
-      level: "Beginner"
-    },
-    {
-      id: 2,
-      title: "Modern Web Development",
-      instructor: "David Chen",
-      category: "Development",
-      rating: 4.9,
-      students: 2156,
-      duration: "32 lessons",
-      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80",
-      level: "Intermediate"
-    },
-    {
-      id: 3,
-      title: "Data Analytics Essentials",
-      instructor: "Michael Adams",
-      category: "Data & Analytics",
-      rating: 4.7,
-      students: 987,
-      duration: "18 lectures",
-      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80",
-      level: "Beginner"
-    },
-  ];
-
-  const categories = ["All courses", "Design", "Development", "Data & Analytics"];
-
-  return (
-    <section id="courses" className="py-20 px-4 lg:px-6 bg-muted/30">
-      <div className="container mx-auto">
-        <div className="flex items-end justify-between mb-12">
-          <div>
-            <p className="text-sm font-semibold text-emerald-600 uppercase tracking-wider mb-4">FOLLOW YOUR CURIOSITY</p>
-            <h2 className="text-3xl md:text-4xl font-bold">
-              What will you learn next?
-            </h2>
-            <p className="text-lg text-muted-foreground mt-2">
-              A new perspective. A practical skill. A fresh beginning.
-            </p>
-          </div>
-          <Link href="/dashboard/learner/courses" className="hidden md:flex items-center gap-2 text-emerald-600 font-medium hover:gap-3 transition-all">
-            Browse all courses
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
-          {categories.map((cat, idx) => (
-            <button
-              key={idx}
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                idx === 0 
-                  ? 'bg-emerald-600 text-white' 
-                  : 'bg-white dark:bg-card border hover:border-emerald-600'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {courses.map((course) => (
-            <Link 
-              key={course.id}
-              href={`/dashboard/learner/courses/${course.id}`}
-              className="group bg-white dark:bg-card rounded-xl overflow-hidden border hover:shadow-lg transition-all"
-            >
-              <div className="relative aspect-video overflow-hidden bg-muted">
-                <div className="absolute top-3 left-3 px-2 py-1 bg-emerald-600 text-white text-xs font-medium rounded">
-                  {course.level}
-                </div>
-                <img 
-                  src={course.image} 
-                  alt={course.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-              <div className="p-5 space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-emerald-600 font-medium">{course.category}</span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-amber-500">★</span>
-                    <span className="font-medium">{course.rating}</span>
-                  </div>
-                </div>
-                <h3 className="font-semibold text-lg group-hover:text-emerald-600 transition-colors">
-                  {course.title}
-                </h3>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Users className="w-4 h-4" />
-                  <span>{course.instructor}</span>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t text-sm text-muted-foreground">
-                  <span>{course.duration}</span>
-                  <span>{course.students.toLocaleString()} students</span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        <div className="mt-8 text-center md:hidden">
-          <Link href="/dashboard/learner/courses" className="inline-flex items-center gap-2 text-emerald-600 font-medium">
-            Browse all courses
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        <p className="text-sm text-muted-foreground mt-8 text-center">
-          Featured courses are illustrated for UI design purposes.
-        </p>
       </div>
     </section>
   );
@@ -507,7 +376,11 @@ function Footer() {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div>
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <GraduationCap className="w-8 h-8 text-emerald-600" />
+              <img 
+                src="/logo.png" 
+                alt="TrailForge" 
+                className="w-10 h-10 rounded-lg"
+              />
               <span className="text-xl font-bold">TrailForge.</span>
             </Link>
             <p className="text-sm text-muted-foreground">
@@ -519,8 +392,8 @@ function Footer() {
             <h4 className="font-semibold mb-4">Product</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="#features" className="hover:text-foreground transition-colors">Features</Link></li>
-              <li><Link href="#courses" className="hover:text-foreground transition-colors">Courses</Link></li>
               <li><Link href="#how-it-works" className="hover:text-foreground transition-colors">How It Works</Link></li>
+              <li><Link href="#testimonials" className="hover:text-foreground transition-colors">Testimonials</Link></li>
               <li><Link href="#" className="hover:text-foreground transition-colors">Pricing</Link></li>
             </ul>
           </div>
