@@ -39,6 +39,10 @@ export function LoginForm() {
     
     try {
       const response = await loginUser(data.email, data.password);
+      console.log('[Login] Login response:', response);
+      console.log('[Login] User role:', response.user.role);
+      console.log('[Login] User object:', response.user);
+      
       setAuthToken(response.accessToken);
       setUser(response.user);
       toast.success(`Welcome, ${response.user.firstName}!`);

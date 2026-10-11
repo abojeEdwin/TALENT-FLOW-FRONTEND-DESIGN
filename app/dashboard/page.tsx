@@ -11,13 +11,25 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
+      console.log('[Dashboard Redirect] User:', user);
+      console.log('[Dashboard Redirect] User role:', user.role);
+      console.log('[Dashboard Redirect] hasRole(ORG_ADMIN):', hasRole(RoleName.ORG_ADMIN));
+      console.log('[Dashboard Redirect] hasRole(SUPER_ADMIN):', hasRole(RoleName.SUPER_ADMIN));
+      console.log('[Dashboard Redirect] hasRole(INSTRUCTOR):', hasRole(RoleName.INSTRUCTOR));
+      console.log('[Dashboard Redirect] hasRole(LEARNER):', hasRole(RoleName.LEARNER));
+      
       if (hasRole(RoleName.ORG_ADMIN) || hasRole(RoleName.SUPER_ADMIN)) {
+        console.log('[Dashboard Redirect] Redirecting to /dashboard/admin/users');
         router.push("/dashboard/admin/users");
       } else if (hasRole(RoleName.INSTRUCTOR)) {
+        console.log('[Dashboard Redirect] Redirecting to /dashboard/instructor/courses');
         router.push("/dashboard/instructor/courses");
       } else {
+        console.log('[Dashboard Redirect] Redirecting to /dashboard/learner/courses');
         router.push("/dashboard/learner/courses");
       }
+    } else {
+      console.log('[Dashboard Redirect] No user found, waiting...');
     }
   }, [user, hasRole, router]);
 
