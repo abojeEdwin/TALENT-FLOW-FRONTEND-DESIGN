@@ -4,11 +4,15 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { resetPasswordSchema, type ResetPasswordFormData } from "@/lib/utils/validators";
-import { resetPassword } from "@/lib/api/auth";
+import { resetPasswordWithTokenSchema, type ResetPasswordWithTokenFormData } from "@/lib/utils/validators";
+import { resetPasswordWithToken } from "@/lib/api/auth";
 import { APIError } from "@/lib/api/client";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function ResetPasswordForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,32 +25,36 @@ export function ResetPasswordForm() {
     handleSubmit,
     formState: { errors },
     setError,
-  } = useForm<ResetPasswordFormData>({
-    resolver: zodResolver(resetPasswordSchema),
+  } = useForm<ResetPasswordWithTokenFormData>({
+    resolver: zodResolver(resetPasswordWithTokenSchema),
   });
 
   if (!token) {
     return (
-      <div className="text-center">
-        <h1 className="mb-2 text-2xl font-bold text-gray-900">Invalid Link</h1>
-        <p className="mb-6 text-gray-600">
-          The password reset link is invalid or has expired.
-        </p>
-        <Link
-          href="/auth/login"
-          className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-        >
-          Back to Login
-        </Link>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Invalid Link</CardTitle>
+          <CardDescription>
+            The password reset link is invalid or has expired.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Please request a new password reset.
+          </p>
+          <Button asChild className="w-full">
+            <Link href="/auth/forgot-password">Request Password Reset</Link>
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
-  const onSubmit = async (data: ResetPasswordFormData) => {
+  const onSubmit = async (data: ResetPasswordWithTokenFormData) => {
     setIsSubmitting(true);
     try {
-      await resetPassword(token, data.password);
-      toast.success("Password reset successful!");
+      const response = await resetPasswordWithToken(token, data.password);
+      toast.success(response.message || "Password reset successful!");
       router.push("/auth/login");
     } catch (error) {
       if (error instanceof APIError) {
@@ -66,61 +74,57 @@ export function ResetPasswordForm() {
   };
 
   return (
-    <div>
-      <h1 className="mb-2 text-2xl font-bold text-gray-900">Reset Password</h1>
-      <p className="mb-6 text-gray-600">Enter your new password below</p>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            New Password
-          </label>
-          <input
-            type="password"
-            {...register("password")}
-            className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            placeholder="••••••••"
-          />
-          {errors.password && (
-            <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-          )}
-          <p className="mt-2 text-xs text-gray-500">
-            Must be at least 8 characters with letters and numbers
-          </p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Confirm Password
-          </label>
-          <input
-            type="password"
-            {...register("confirmPassword")}
-            className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-            placeholder="••••••••"
-          />
-          {errors.confirmPassword && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.confirmPassword.message}
+    <Card>
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl">Reset Password</CardTitle>
+        <CardDescription>Enter your new password below</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="password">New Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              {...register("password")}
+              disabled={isSubmitting}
+            />
+            {errors.password && (
+              <p className="text-sm text-destructive">{errors.password.message}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Must be at least 8 characters with letters and numbers
             </p>
-          )}
-        </div>
+          </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full rounded-lg bg-blue-600 py-2 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? "Resetting..." : "Reset Password"}
-        </button>
-      </form>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="••••••••"
+              {...register("confirmPassword")}
+              disabled={isSubmitting}
+            />
+            {errors.confirmPassword && (
+              <p className="text-sm text-destructive">
+                {errors.confirmPassword.message}
+              </p>
+            )}
+          </div>
 
-      <p className="mt-6 text-center text-sm text-gray-600">
-        Remember your password?{" "}
-        <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-700">
-          Sign in
-        </Link>
-      </p>
-    </div>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Resetting..." : "Reset Password"}
+          </Button>
+
+          <div className="text-center text-sm">
+            <Link href="/auth/login" className="text-primary hover:underline">
+              Back to Login
+            </Link>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

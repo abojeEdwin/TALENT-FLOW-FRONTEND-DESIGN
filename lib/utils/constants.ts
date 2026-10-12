@@ -36,6 +36,7 @@ export const PERMISSIONS = {
 } as const;
 
 export const ADMIN_MENU_ITEMS = [
+  { label: "Dashboard", href: "/dashboard/admin" },
   { label: "Users", href: "/dashboard/admin/users" },
   { label: "Instructors", href: "/dashboard/admin/instructors" },
   { label: "Programs", href: "/dashboard/admin/programs" },
@@ -43,6 +44,7 @@ export const ADMIN_MENU_ITEMS = [
 ];
 
 export const INSTRUCTOR_MENU_ITEMS = [
+  { label: "Dashboard", href: "/dashboard/instructor" },
   { label: "My Courses", href: "/dashboard/instructor/courses" },
   { label: "Materials", href: "/dashboard/instructor/materials" },
   { label: "Assignments", href: "/dashboard/instructor/assignments" },
@@ -50,6 +52,7 @@ export const INSTRUCTOR_MENU_ITEMS = [
 ];
 
 export const LEARNER_MENU_ITEMS = [
+  { label: "Dashboard", href: "/dashboard/learner" },
   { label: "Browse Courses", href: "/dashboard/learner/courses" },
   { label: "My Courses", href: "/dashboard/learner/my-courses" },
   { label: "Profile", href: "/dashboard/learner/profile" },

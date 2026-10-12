@@ -115,6 +115,24 @@ export interface ResetPasswordRequest {
   newPassword: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
+export interface VerifyPasswordResetPinRequest {
+  email: string;
+  pin: string;
+}
+
+export interface VerifyPasswordResetPinResponse {
+  resetToken: string;
+  message: string;
+}
+
 export interface ApiMessageResponse {
   message: string;
 }
