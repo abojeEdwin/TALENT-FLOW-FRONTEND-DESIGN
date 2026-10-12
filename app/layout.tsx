@@ -1,15 +1,14 @@
 import type { Metadata } from 'next'
-import { IBM_Plex_Sans } from 'next/font/google'
+import { Plus_Jakarta_Sans } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/lib/context/auth-context'
-import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from 'sonner'
 import './globals.css'
 
-const ibmPlexSans = IBM_Plex_Sans({ 
+const plusJakartaSans = Plus_Jakarta_Sans({ 
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-ibm",
+  weight: ["200", "300", "400", "500", "600", "700", "800"],
+  variable: "--font-jakarta",
   display: "swap",
 });
 
@@ -21,11 +20,6 @@ export const metadata: Metadata = {
     icon: [
       {
         url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
       },
       {
         url: '/icon.svg',
@@ -42,14 +36,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${ibmPlexSans.variable} font-sans antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-          <Toaster position="top-right" />
-        </ThemeProvider>
+    <html lang="en" className="light">
+      <body className={`${plusJakartaSans.variable} font-sans antialiased`}>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+        <Toaster position="top-right" />
         <Analytics />
       </body>
     </html>

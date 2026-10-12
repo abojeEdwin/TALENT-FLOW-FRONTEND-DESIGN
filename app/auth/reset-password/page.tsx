@@ -1,10 +1,15 @@
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
+import { Suspense } from "react";
 
 export const metadata = {
-  title: "Reset Password - TrailForge",
-  description: "Reset your TrailForge account password",
+  title: "Reset Password - TalentFlow",
+  description: "Reset your TalentFlow account password",
 };
 
 export default function ResetPasswordPage() {
-  return <ResetPasswordForm />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordForm />
+    </Suspense>
+  );
 }

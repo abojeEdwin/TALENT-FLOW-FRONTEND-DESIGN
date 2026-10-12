@@ -6,6 +6,11 @@ import {
   AuthResponse,
   LoginResponse,
   ResetPasswordRequest,
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
+  VerifyPasswordResetPinRequest,
+  VerifyPasswordResetPinResponse,
+  ApiMessageResponse,
 } from "./types";
 
 /** POST /api/v1/auth/login */
@@ -58,6 +63,53 @@ export async function resetPassword(
 ): Promise<void> {
   const request: ResetPasswordRequest = { token, newPassword };
   await fetchAPI("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify(request),
+    skipAuth: true,
+  });
+}
+
+/**
+ * POST /api/v1/auth/forgot-password
+ * Initiates the password reset flow by sending a PIN to the user's email
+ */
+export async function forgotPassword(
+  email: string
+): Promise<ForgotPasswordResponse> {
+  const request: ForgotPasswordRequest = { email };
+  return fetchAPI<ForgotPasswordResponse>("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify(request),
+    skipAuth: true,
+  });
+}
+
+/**
+ * POST /api/v1/auth/verify-password-reset-pin
+ * Verifies the PIN and returns a reset token for password reset
+ */
+export async function verifyPasswordResetPin(
+  email: string,
+  pin: string
+): Promise<VerifyPasswordResetPinResponse> {
+  const request: VerifyPasswordResetPinRequest = { email, pin };
+  return fetchAPI<VerifyPasswordResetPinResponse>("/auth/verify-password-reset-pin", {
+    method: "POST",
+    body: JSON.stringify(request),
+    skipAuth: true,
+  });
+}
+
+/**
+ * POST /api/v1/auth/reset-password
+ * Resets the password using the token obtained from PIN verification
+ */
+export async function resetPasswordWithToken(
+  token: string,
+  newPassword: string
+): Promise<ApiMessageResponse> {
+  const request: ResetPasswordRequest = { token, newPassword };
+  return fetchAPI<ApiMessageResponse>("/auth/reset-password", {
     method: "POST",
     body: JSON.stringify(request),
     skipAuth: true,

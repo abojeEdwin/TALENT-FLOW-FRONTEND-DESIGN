@@ -1,5 +1,4 @@
 import { OrganisationRegisterForm } from "@/components/auth/organisation-register-form";
-import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import { Building2, CheckCircle2 } from "lucide-react";
 
@@ -75,7 +74,6 @@ export default function RegisterPage() {
             <span className="font-bold text-sm">TrailForge</span>
           </Link>
           <div className="lg:ml-auto flex items-center gap-4 ml-auto">
-            <ThemeToggle />
             <span className="hidden sm:block text-sm text-muted-foreground">
               Already have an account?{" "}
               <Link href="/auth/login" className="text-primary font-semibold hover:underline">

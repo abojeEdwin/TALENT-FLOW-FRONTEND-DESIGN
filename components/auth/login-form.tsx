@@ -33,8 +33,6 @@ export function LoginForm() {
     console.log('[DEBUG] Form submitted with data:', {
       email: data.email,
       passwordLength: data.password?.length,
-      emailTrimmed: data.email?.trim(),
-      passwordTrimmed: data.password?.trim(),
     });
     
     try {
@@ -43,10 +41,37 @@ export function LoginForm() {
       console.log('[Login] User role:', response.user.role);
       console.log('[Login] User object:', response.user);
       
+      // Set token and user
       setAuthToken(response.accessToken);
       setUser(response.user);
+      
       toast.success(`Welcome, ${response.user.firstName}!`);
-      router.push("/dashboard");
+      
+      // Route based on role immediately
+      const userRole = response.user.role;
+      console.log('[Login] About to route user with role:', userRole);
+      
+      if (userRole === "ORG_ADMIN" || userRole === "SUPER_ADMIN") {
+        console.log('[Login] ADMIN DETECTED - Routing to /dashboard/admin');
+        setTimeout(() => {
+          router.push("/dashboard/admin");
+        }, 100);
+      } else if (userRole === "INSTRUCTOR") {
+        console.log('[Login] INSTRUCTOR DETECTED - Routing to /dashboard/instructor');
+        setTimeout(() => {
+          router.push("/dashboard/instructor");
+        }, 100);
+      } else if (userRole === "LEARNER") {
+        console.log('[Login] LEARNER DETECTED - Routing to /dashboard/learner');
+        setTimeout(() => {
+          router.push("/dashboard/learner");
+        }, 100);
+      } else {
+        console.log('[Login] UNKNOWN ROLE - Routing to /dashboard');
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 100);
+      }
     } catch (error) {
       if (error instanceof APIError) {
         if (error.status === 404) {
@@ -101,7 +126,7 @@ export function LoginForm() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium text-foreground">Password</label>
-            <Link href="/auth/reset-password" className="text-sm font-medium text-primary hover:underline">
+            <Link href="/auth/forgot-password" className="text-sm font-medium text-primary hover:underline">
               Forgot?
             </Link>
           </div>

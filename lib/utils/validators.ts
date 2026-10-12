@@ -48,6 +48,27 @@ export const emailSchema = z.object({
   email: z.string().email("Invalid email address"),
 });
 
+export const verifyPinSchema = z.object({
+  pin: z
+    .string()
+    .min(6, "PIN must be 6 digits")
+    .max(6, "PIN must be 6 digits")
+    .regex(/^\d+$/, "PIN must contain only numbers"),
+});
+
+export const resetPasswordWithTokenSchema = z.object({
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(100, "Password must be less than 100 characters")
+    .regex(/[a-zA-Z]/, "Password must contain letters")
+    .regex(/\d/, "Password must contain numbers"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
 // User validators
 export const updateUserStatusSchema = z.object({
   status: z.enum(["ACTIVE", "INACTIVE", "LOCKED", "SUSPENDED"]),
@@ -112,6 +133,9 @@ export const uploadMaterialSchema = z.object({
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+export type EmailFormData = z.infer<typeof emailSchema>;
+export type VerifyPinFormData = z.infer<typeof verifyPinSchema>;
+export type ResetPasswordWithTokenFormData = z.infer<typeof resetPasswordWithTokenSchema>;
 export type CreateCourseFormData = z.infer<typeof createCourseSchema>;
 export type CreateAssignmentFormData = z.infer<typeof createAssignmentSchema>;
 export type UploadMaterialFormData = z.infer<typeof uploadMaterialSchema>;

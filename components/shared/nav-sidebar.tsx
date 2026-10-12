@@ -29,6 +29,7 @@ import {
 
 const getIconForLabel = (label: string) => {
   const labelLower = label.toLowerCase();
+  if (labelLower === "dashboard") return Home;
   if (labelLower.includes("message")) return MessageSquare;
   if (labelLower.includes("user")) return Users;
   if (labelLower.includes("instructor")) return GraduationCap;
@@ -86,7 +87,13 @@ export function NavSidebarContent({ onNavigate }: NavSidebarContentProps) {
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {menuItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
+          // Check if current path matches this menu item
+          // For "Dashboard" links, only match exact path
+          const isDashboardItem = item.label.toLowerCase() === "dashboard";
+          const isActive = isDashboardItem 
+            ? pathname === item.href
+            : pathname.startsWith(item.href);
+          
           const Icon = getIconForLabel(item.label);
           const isMessages = item.label.toLowerCase().includes("message");
           const badgeCount = isMessages ? chatUnreadCount : 0;
